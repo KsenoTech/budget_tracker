@@ -1,3 +1,9 @@
+using Microsoft.AspNetCore.Identity;
+using server.ApplicationCore.DomModels;
+using server.ApplicationCore.Interfaces.Repositories;
+using server.Infrastructure.DAL.Repositories;
+using System.Text.Json.Serialization;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddCors(options =>
@@ -13,10 +19,20 @@ builder.Services.AddCors(options =>
 
 // Add services to the container.
 
+builder.Services.AddIdentity<User, IdentityRole>(options => {
+    options.User.RequireUniqueEmail = true;
+}).AddEntityFrameworkStores<AccountingForIncomeAndExpensesContext>().AddDefaultTokenProviders();
+builder.Services.AddDbContext<AccountingForIncomeAndExpensesContext>();
+builder.Services.AddControllers().AddJsonOptions(x => x.JsonSerializerOptions.ReferenceHandler
+                                                                        = ReferenceHandler.IgnoreCycles);
+
+builder.Services.AddScoped<IDbRepository, DbRepository>();
+
+
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddLogging();
 
 var app = builder.Build();
 

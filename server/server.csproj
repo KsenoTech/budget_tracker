@@ -20,7 +20,6 @@
     <Folder Include="ApplicationCore\Interfaces\Services\" />
     <Folder Include="Controllers\" />
     <Folder Include="Infrastructure\BLL\Services\" />
-    <Folder Include="Infrastructure\DAL\Repositories\" />
   </ItemGroup>
 
 </Project>
