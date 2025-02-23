@@ -35,8 +35,7 @@ builder.Services.AddControllers().
 // Регистрация зависимостей
 builder.Services.AddScoped<IDbRepository, DbRepository>();
 
-builder.Services.AddScoped<IAuthRepository, AuthRepository>();
-builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IClientService, ClientService>();
 
 
 

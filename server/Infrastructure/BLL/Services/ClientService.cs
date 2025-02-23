@@ -9,25 +9,25 @@ using System.Text;
 
 namespace server.Infrastructure.BLL.Services
 {
-    public class AuthService : IAuthService
+    public class ClientService : IClientService
     {
-        private readonly IAuthRepository _authRepository;
+        private IDbRepository _dbcontext;
         private readonly IConfiguration _configuration;      
 
-        public AuthService(IAuthRepository authRepository, IConfiguration configuration)
+        public ClientService(IDbRepository dbcontext, IConfiguration configuration)
         {
-            _authRepository = authRepository;
+            _dbcontext = dbcontext;
             _configuration = configuration;
         }
 
-        public async Task<string> Register(string username, string password, string email)
+        public async Task<string> AuthenticateClient(string password, string email)
         {
-            var existingUser = await _authRepository.GetUserByUsername(username);
+            var existingUser = await _dbcontext.Clients.GetByIdAsync(email);
             if (existingUser != null)
             {
                 // Если пользователь уже существует, проверяем пароль
                 if (!BCrypt.Net.BCrypt.Verify(password, existingUser.PasswordHash))
-                    throw new Exception("Invalid password for existing user");
+                    throw new Exception("Пользователь с таким Email существует. Проверьте пароль");
 
                 // Выдаем новый токен существующему пользователю
                 return GenerateJwtToken(existingUser);
@@ -36,27 +36,16 @@ namespace server.Infrastructure.BLL.Services
             // Регистрация нового пользователя
             var user = new Client
             {
-                UserName = username,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
                 Email = email,
                 CreatedAt = DateTime.UtcNow
             };
 
-            await _authRepository.RegisterUser(user);
-            return GenerateJwtToken(user);
-        }
-
-        public async Task<string> Login(string username, string password)
-        {
-            var user = await _authRepository.GetUserByUsername(username);
-            if (user == null)
+            var clientCreated = await _dbcontext.Clients.CreateAsync(user);
+            if (clientCreated)
             {
-                throw new Exception("User not found");
+                await _dbcontext.SaveAsync();
             }
-
-            if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
-                throw new Exception("Invalid credentials");
-
             return GenerateJwtToken(user);
         }
 
@@ -65,7 +54,7 @@ namespace server.Infrastructure.BLL.Services
             var claims = new[]
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.UserName)
+                new Claim(ClaimTypes.Email, user.Email)
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));

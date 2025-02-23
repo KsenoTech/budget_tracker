@@ -1,14 +1,18 @@
 import React from 'react';
-import ReactDOM from 'react-dom/client';
-import './index.css';
+import ReactDOM from 'react-dom';
 import App from './App';
-import reportWebVitals from './reportWebVitals';
-import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
-<AuthProvider>
-    <App />
-  </AuthProvider>
+const theme = createTheme({
+    palette: {
+        primary: { main: '#1976d2' }, // Синий
+        secondary: { main: '#dc004e' }, // Красный
+    },
+});
+
+ReactDOM.render(
+    <ThemeProvider theme={theme}>
+        <App />
+    </ThemeProvider>,
+    document.getElementById('root')
 );
-reportWebVitals();

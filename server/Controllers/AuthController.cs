@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using server.ApplicationCore.Interfaces.Services;
 using System.Security.Claims;
@@ -8,56 +9,46 @@ namespace server.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AuthController : ControllerBase
+    [EnableCors]
+    public class AuthController : Controller
     {
-        private readonly IAuthService _authService;
+        private readonly IClientService _clientService;
         private readonly ILogger<AuthController> _logger;
 
-        public AuthController(IAuthService authService, ILogger<AuthController> logger)
+        public AuthController(IClientService authService, ILogger<AuthController> logger)
         {
-            _authService = authService;
+            _clientService = authService;
             _logger = logger;
         }
 
-        [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterDto dto)
+        [HttpPost("auth")]
+        public async Task<IActionResult> Authenticate([FromBody] RegisterDto dto)
         {
             try
             {
-                _logger.LogInformation("Login attempt for username: {Username}", dto.Username);
-                var token = await _authService.Register(dto.Username, dto.Password, dto.Email);
-                _logger.LogInformation("Login successful for username: {Username}", dto.Username);
+                _logger.LogInformation("Получение dto.Email в методе Register in Controller: {Email}", dto.Email);
+
+                var token = await _clientService.AuthenticateClient( dto.Password, dto.Email);
+                _logger.LogInformation(dto.Email, token);
+                _logger.LogInformation("Login successful for Email: {Email} with token {token}", dto.Email, token);
+
                 return Ok(new { Token = token, Message = "Successfully logged in" });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Login failed for username: {Username}", dto.Username);
-                return BadRequest(new { Message = ex.Message });
+                _logger.LogError(ex, "Login failed for username: {Username}", dto.Email);
+                return BadRequest(new { ex.Message });
             }
         }
 
-        [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginDto dto)
-        {
-            try
-            {
-                _logger.LogInformation("Login attempt for username: {Username}", dto.Username);
-                var token = await _authService.Login(dto.Username, dto.Password);
-                return Ok(new { Token = token, Message = "Successfully logged in" });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { Message = ex.Message });
-            }
-        }
 
-        [HttpGet("check")]
-        [Authorize] // Требует валидный токен
-        public IActionResult CheckToken()
-        {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var username = User.FindFirst(ClaimTypes.Name)?.Value;
-            return Ok(new { UserId = userId, Username = username, Message = "Token is valid" });
-        }
+        //[HttpGet("checkAuth")]
+        //[Authorize] // Требует валидный токен проверять при обновлении страницы на реакте
+        //public IActionResult CheckToken()
+        //{
+        //    var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        //    var email = User.FindFirst(ClaimTypes.Email)?.Value;
+        //    return Ok(new { UserId = userId, Email = email, Message = "Token is valid" });
+        //}
     }
 }

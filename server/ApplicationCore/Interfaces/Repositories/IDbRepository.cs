@@ -10,6 +10,6 @@ namespace server.ApplicationCore.Interfaces.Repositories
         IRepository<ExpenseItem> ExpenseItems { get; }
         IRepository<IncomeCategory> IncomeCategorys { get; }
         IRepository<IncomeItem> IncomeItems { get; }
-        int Save();
+        Task SaveAsync();
     }
 }

@@ -6,13 +6,13 @@ namespace server.Infrastructure.DAL.Repositories
     public class DbRepository : IDbRepository
     {
         private AccountingForIncomeAndExpensesContext _dbcontext;
-        private readonly ILogger<AccountingForIncomeAndExpensesContext> _logger;
+
+        private ClientRepositorySQL _clientReposSQL;
 
 
-        public DbRepository(AccountingForIncomeAndExpensesContext dbcontext, ILogger<AccountingForIncomeAndExpensesContext> logger)
+        public DbRepository(AccountingForIncomeAndExpensesContext dbcontext)
         {
             _dbcontext = dbcontext;
-            _logger = logger;
         }
 
 
@@ -20,7 +20,9 @@ namespace server.Infrastructure.DAL.Repositories
         {
             get
             {
-                throw new NotImplementedException();
+                if (_clientReposSQL == null)
+                    _clientReposSQL = new ClientRepositorySQL(_dbcontext);
+                return _clientReposSQL;
             }
         }
 
@@ -64,9 +66,9 @@ namespace server.Infrastructure.DAL.Repositories
             }
         }
 
-        public int Save()
+        public async Task SaveAsync()
         {
-            throw new NotImplementedException();
+            await _dbcontext.SaveChangesAsync();
         }
     }
 }
