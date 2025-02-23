@@ -1,8 +1,9 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client'; // Импортируем createRoot
 import App from './App';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 
+// Создаем тему
 const theme = createTheme({
     palette: {
         primary: { main: '#1976d2' }, // Синий
@@ -10,9 +11,13 @@ const theme = createTheme({
     },
 });
 
-ReactDOM.render(
+// Получаем элемент корня и создаем root
+const container = document.getElementById('root');
+const root = createRoot(container);
+
+// Рендерим приложение с темой
+root.render(
     <ThemeProvider theme={theme}>
         <App />
-    </ThemeProvider>,
-    document.getElementById('root')
+    </ThemeProvider>
 );

@@ -1,4 +1,6 @@
-﻿namespace server.ApplicationCore.Interfaces.Repositories
+﻿using server.ApplicationCore.DomModels;
+
+namespace server.ApplicationCore.Interfaces.Repositories
 {
     /// <summary>
     /// Generic репозиторий CRUD
@@ -44,5 +46,6 @@
             Task<bool> DeleteAsync<TId>(TId id);
         #endregion
 
+        Task<List<IncomeCategory>> GetByUserIdAsync(string userId);
     }
 }

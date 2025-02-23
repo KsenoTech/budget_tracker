@@ -55,5 +55,10 @@ namespace server.Infrastructure.DAL.Repositories
         {
             throw new NotImplementedException();
         }
+
+        public Task<List<IncomeCategory>> GetByUserIdAsync(string userId)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

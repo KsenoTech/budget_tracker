@@ -36,6 +36,8 @@ builder.Services.AddControllers().
 builder.Services.AddScoped<IDbRepository, DbRepository>();
 
 builder.Services.AddScoped<IClientService, ClientService>();
+builder.Services.AddScoped<IIncomeCategoryService, IncomeCategoryService>();
+
 
 
 

@@ -8,6 +8,7 @@ namespace server.Infrastructure.DAL.Repositories
         private AccountingForIncomeAndExpensesContext _dbcontext;
 
         private ClientRepositorySQL _clientReposSQL;
+        private IncomeCategoryRepositorySQL _incomeCategorySQL;
 
 
         public DbRepository(AccountingForIncomeAndExpensesContext dbcontext)
@@ -50,11 +51,13 @@ namespace server.Infrastructure.DAL.Repositories
             }
         }
 
-        public IRepository<IncomeCategory> IncomeCategorys
+        public IRepository<IncomeCategory> IncomeCategories
         {
             get
             {
-                throw new NotImplementedException();
+                if (_incomeCategorySQL == null)
+                    _incomeCategorySQL = new IncomeCategoryRepositorySQL(_dbcontext);
+                return _incomeCategorySQL;
             }
         }
 
