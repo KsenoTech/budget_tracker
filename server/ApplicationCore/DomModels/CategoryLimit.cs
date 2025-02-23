@@ -1,4 +1,5 @@
-﻿namespace server.ApplicationCore.DomModels;
+﻿
+namespace server.ApplicationCore.DomModels;
 
 public partial class CategoryLimit
 {

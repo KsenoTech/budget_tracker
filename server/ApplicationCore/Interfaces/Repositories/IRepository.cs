@@ -7,5 +7,6 @@
         bool Create(T item);
         bool Update(T item);
         bool Delete(int id);
+
     }
 }

@@ -4,7 +4,7 @@ public partial class ExpenseCategory
 {
     public int Id { get; set; }
 
-    public int UserId { get; set; }
+    public string UserId { get; set; }
 
     public string Name { get; set; } = null!;
 
@@ -14,5 +14,5 @@ public partial class ExpenseCategory
 
     public virtual ICollection<ExpenseItem> ExpenseItems { get; set; } = new List<ExpenseItem>();
 
-    public virtual User User { get; set; } = null!;
+    public virtual Client User { get; set; } = null!;
 }

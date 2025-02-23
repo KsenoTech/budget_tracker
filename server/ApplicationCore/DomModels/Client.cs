@@ -2,7 +2,7 @@
 
 namespace server.ApplicationCore.DomModels;
 
-public partial class User : IdentityUser
+public partial class Client : IdentityUser
 {  
     public DateTime CreatedAt { get; set; }
 

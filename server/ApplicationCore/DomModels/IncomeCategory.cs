@@ -4,7 +4,7 @@ public partial class IncomeCategory
 {
     public int Id { get; set; }
 
-    public int UserId { get; set; }
+    public string UserId { get; set; }
 
     public string Name { get; set; } = null!;
 
@@ -12,5 +12,5 @@ public partial class IncomeCategory
 
     public virtual ICollection<IncomeItem> IncomeItems { get; set; } = new List<IncomeItem>();
 
-    public virtual User User { get; set; } = null!;
+    public virtual Client User { get; set; } = null!;
 }

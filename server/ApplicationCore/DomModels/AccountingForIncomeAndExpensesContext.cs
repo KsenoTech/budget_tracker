@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System;
 
 namespace server.ApplicationCore.DomModels;
 
-public partial class AccountingForIncomeAndExpensesContext : IdentityDbContext<User>
+public partial class AccountingForIncomeAndExpensesContext : IdentityDbContext<Client>
 {
     protected readonly IConfiguration Configuration;
 
@@ -23,15 +25,18 @@ public partial class AccountingForIncomeAndExpensesContext : IdentityDbContext<U
 
     public virtual DbSet<IncomeItem> IncomeItems { get; set; }
 
-    public virtual DbSet<User> Clients { get; set; }
+    public virtual DbSet<Client> Clients { get; set; }
 
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
+     => optionsBuilder.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
+
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
+
         modelBuilder.Entity<CategoryLimit>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__Category__3214EC0765A9EB74");
@@ -58,7 +63,7 @@ public partial class AccountingForIncomeAndExpensesContext : IdentityDbContext<U
 
             entity.HasOne(d => d.User).WithMany(p => p.ExpenseCategories)
                 .HasForeignKey(d => d.UserId)
-                .HasConstraintName("FK__ExpenseCa__UserI__3B75D760");
+                .HasConstraintName("FK__ExpenseCa__ClientI__3B75D760");
         });
 
         modelBuilder.Entity<ExpenseItem>(entity =>
@@ -87,7 +92,7 @@ public partial class AccountingForIncomeAndExpensesContext : IdentityDbContext<U
 
             entity.HasOne(d => d.User).WithMany(p => p.IncomeCategories)
                 .HasForeignKey(d => d.UserId)
-                .HasConstraintName("FK__IncomeCat__UserI__4316F928");
+                .HasConstraintName("FK__IncomeCat__ClientI__4316F928");
         });
 
         modelBuilder.Entity<IncomeItem>(entity =>
@@ -105,15 +110,14 @@ public partial class AccountingForIncomeAndExpensesContext : IdentityDbContext<U
                 .HasConstraintName("FK__IncomeIte__Incom__46E78A0C");
         });
 
-        modelBuilder.Entity<User>(entity =>
+        modelBuilder.Entity<Client>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Users__3214EC072F24FD09");
+            entity.HasKey(e => e.Id).HasName("PK__Clients__3214EC072F24FD09");
 
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
         });
-        base.OnModelCreating(modelBuilder);
 
         //OnModelCreatingPartial(modelBuilder);
     }

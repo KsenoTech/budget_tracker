@@ -4,7 +4,7 @@ namespace server.ApplicationCore.Interfaces.Repositories
 {
     public interface IDbRepository
     {
-        IRepository<User> Clients { get; }
+        IRepository<Client> Clients { get; }
         IRepository<CategoryLimit> CategoryLimits { get; }
         IRepository<ExpenseCategory> ExpenseCategorys { get; }
         IRepository<ExpenseItem> ExpenseItems { get; }

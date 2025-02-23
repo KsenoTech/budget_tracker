@@ -16,7 +16,7 @@ namespace server.Infrastructure.DAL.Repositories
         }
 
 
-        public IRepository<User> Clients
+        public IRepository<Client> Clients
         {
             get
             {
