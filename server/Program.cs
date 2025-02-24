@@ -34,11 +34,10 @@ builder.Services.AddControllers().
 
 // Регистрация зависимостей
 builder.Services.AddScoped<IDbRepository, DbRepository>();
-
 builder.Services.AddScoped<IClientService, ClientService>();
-builder.Services.AddScoped<IIncomeCategoryService, IncomeCategoryService>();
+builder.Services.AddScoped<IExpenseCategoryService, ExpenseCategoryService>();
 
-
+builder.Services.AddLogging();
 
 
 // Настройка JWT
@@ -77,7 +76,12 @@ builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddLogging();
+
+builder.Services.AddLogging(loggingBuilder =>
+{
+    loggingBuilder.AddConsole(); // Логирование в консоль
+    loggingBuilder.AddDebug();   // Логирование в дебаг-вывод
+});
 
 var app = builder.Build();
 

@@ -6,14 +6,16 @@ namespace server.Infrastructure.DAL.Repositories
     public class DbRepository : IDbRepository
     {
         private AccountingForIncomeAndExpensesContext _dbcontext;
+        private readonly ILogger<AccountingForIncomeAndExpensesContext> _logger;
 
         private ClientRepositorySQL _clientReposSQL;
-        private IncomeCategoryRepositorySQL _incomeCategorySQL;
+        private ExpenseCategoryRepositorySQL _expenseCategorySQL;
 
 
-        public DbRepository(AccountingForIncomeAndExpensesContext dbcontext)
+        public DbRepository(AccountingForIncomeAndExpensesContext dbcontext, ILogger<AccountingForIncomeAndExpensesContext> logger)
         {
             _dbcontext = dbcontext;
+            _logger = logger;
         }
 
 
@@ -35,11 +37,13 @@ namespace server.Infrastructure.DAL.Repositories
             }
         }
 
-        public IRepository<ExpenseCategory> ExpenseCategorys
+        public IRepository<ExpenseCategory> ExpenseCategories
         {
             get
             {
-                throw new NotImplementedException();
+                if (_expenseCategorySQL == null)
+                    _expenseCategorySQL = new ExpenseCategoryRepositorySQL(_dbcontext, _logger);
+                return _expenseCategorySQL;
             }
         }
 
@@ -55,9 +59,7 @@ namespace server.Infrastructure.DAL.Repositories
         {
             get
             {
-                if (_incomeCategorySQL == null)
-                    _incomeCategorySQL = new IncomeCategoryRepositorySQL(_dbcontext);
-                return _incomeCategorySQL;
+                throw new NotImplementedException();
             }
         }
 

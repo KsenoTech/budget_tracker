@@ -46,6 +46,7 @@ namespace server.ApplicationCore.Interfaces.Repositories
             Task<bool> DeleteAsync<TId>(TId id);
         #endregion
 
-        Task<List<IncomeCategory>> GetByUserIdAsync(string userId);
+        Task<List<ExpenseCategory>> GetByUserIdAsync(string userId);
+        Task<List<ExpenseCategory>> GetByUserEmailAsync(string email);
     }
 }

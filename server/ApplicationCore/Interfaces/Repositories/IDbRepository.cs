@@ -6,7 +6,7 @@ namespace server.ApplicationCore.Interfaces.Repositories
     {
         IRepository<Client> Clients { get; }
         IRepository<CategoryLimit> CategoryLimits { get; }
-        IRepository<ExpenseCategory> ExpenseCategorys { get; }
+        IRepository<ExpenseCategory> ExpenseCategories { get; }
         IRepository<ExpenseItem> ExpenseItems { get; }
         IRepository<IncomeCategory> IncomeCategories { get; }
         IRepository<IncomeItem> IncomeItems { get; }
