@@ -2,7 +2,7 @@ import axios from "axios";
 
 const API_URL = "https://localhost:7007/api/auth"; // Ваш API URL
 
-export const register = async (username, password, email) => {
+export const register = async (username, email, password) => {
   const response = await axios.post(`${API_URL}/register`, {
     username,
     password,
@@ -11,8 +11,8 @@ export const register = async (username, password, email) => {
   return response.data.token;
 };
 
-export const login = async (username, password) => {
-  const response = await axios.post(`${API_URL}/login`, { username, password });
+export const login = async (username, email, password) => {
+  const response = await axios.post(`${API_URL}/login`, { username, email, password });
   return response.data.token;
 };
 

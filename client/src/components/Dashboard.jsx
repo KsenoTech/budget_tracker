@@ -46,7 +46,7 @@ const Dashboard = () => {
             </Drawer>
             <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
                 <Toolbar /> {/* Пустое пространство под AppBar */}
-                <Typography variant="h5">Эта страница пока в разработке</Typography>
+                {/* <Typography variant="h5">Эта страница пока в разработке</Typography> */}
                 <Outlet /> {/* Здесь будут рендериться подмаршруты */}
             </Box>
         </Box>

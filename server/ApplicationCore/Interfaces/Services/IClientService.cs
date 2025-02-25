@@ -2,6 +2,6 @@
 {
     public interface IClientService
     {
-        Task<string> AuthenticateClient(string password, string email);
+        Task<string> AuthenticateClient(string username, string email, string password);
     }
 }

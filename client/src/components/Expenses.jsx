@@ -25,6 +25,7 @@ const Expenses = () => {
         if (!email) throw new Error("Email пользователя не найден");
 
         const token = localStorage.getItem("token");
+        
         if (!token) {
           setError("Токен авторизации не найден");
           setLoading(false);

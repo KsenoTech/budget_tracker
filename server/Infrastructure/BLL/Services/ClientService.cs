@@ -20,7 +20,7 @@ namespace server.Infrastructure.BLL.Services
             _configuration = configuration;
         }
 
-        public async Task<string> AuthenticateClient(string password, string email)
+        public async Task<string> AuthenticateClient(string username, string email, string password)
         {
             var existingUser = await _dbcontext.Clients.GetByIdAsync(email);
             if (existingUser != null)
@@ -36,6 +36,7 @@ namespace server.Infrastructure.BLL.Services
             // Регистрация нового пользователя
             var user = new Client
             {
+                UserName = username,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
                 Email = email,
                 CreatedAt = DateTime.UtcNow
@@ -53,8 +54,8 @@ namespace server.Infrastructure.BLL.Services
         {
             var claims = new[]
             {
-                new Claim(ClaimTypes.Email, user.Id.ToString()),
-                new Claim(ClaimTypes.Email, user.Email)
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, user.UserName)
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));

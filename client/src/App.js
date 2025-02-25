@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
-import Auth from './components/Auth';
+import Auth from './components/Auth/Auth';
 import Dashboard from './components/Dashboard';
 import Incomes from './components/Incomes';
 import Expenses from './components/Expenses';

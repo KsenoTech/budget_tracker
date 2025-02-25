@@ -1,10 +1,11 @@
 import React, { useState, useContext } from 'react';
 import { TextField, Button, Typography, Container, Box } from '@mui/material';
-import { AuthContext } from '../context/AuthContext';
+import { AuthContext } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 const Auth = () => {
+    const [username, setUserName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState(null);
@@ -15,7 +16,7 @@ const Auth = () => {
         e.preventDefault();
         setError(null);
         try {
-            const response = await axios.post('https://localhost:7007/api/auth/auth', { email, password });
+            const response = await axios.post('https://localhost:7007/api/auth/auth', { username, email, password });
             const token = response.data.token;
             setToken(token);
             localStorage.setItem('token', token);
@@ -30,6 +31,15 @@ const Auth = () => {
             <Box sx={{ mt: 8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <Typography variant="h4">Вход</Typography>
                 <form onSubmit={handleSubmit} style={{ width: '100%', marginTop: '1rem' }}>
+                    <TextField
+                        variant="outlined"
+                        margin="normal"
+                        required
+                        fullWidth
+                        label="UserName"
+                        value={username}
+                        onChange={(e) => setUserName(e.target.value)}
+                    />
                     <TextField
                         variant="outlined"
                         margin="normal"

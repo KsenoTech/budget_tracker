@@ -28,7 +28,7 @@ namespace server.Controllers
             {
                 _logger.LogInformation("Получение dto.Email в методе Register in Controller: {Email}", dto.Email);
 
-                var token = await _clientService.AuthenticateClient( dto.Password, dto.Email);
+                var token = await _clientService.AuthenticateClient( dto.UserName, dto.Email, dto.Password);
                 _logger.LogInformation(dto.Email, token);
                 _logger.LogInformation("Login successful for Email: {Email} with token {token}", dto.Email, token);
 
@@ -42,29 +42,32 @@ namespace server.Controllers
         }
 
 
-        //[HttpGet("checkAuth")]
-        //// Требует валидный токен проверять при обновлении страницы на реакте
-        //public IActionResult CheckToken()
-        //{
-        //    var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        //    var email = User.FindFirst(ClaimTypes.Email)?.Value;
-        //    return Ok(new { UserId = userId, Email = email, Message = "Token is valid" });
-        //}
-
         // Новый метод для проверки токена
         [HttpGet("checkAuth")]
-        //[Authorize] // Требует валидный токен
         public IActionResult CheckAuth()
         {
             try
             {
+
+                if (!HttpContext.Request.Headers.ContainsKey("Authorization"))
+                {
+                    _logger.LogWarning("Заголовок Authorization отсутствует");
+                    return Unauthorized(new { Message = "Missing authorization header" });
+                }
+
                 // Извлекаем данные из токена через ClaimsPrincipal
                 var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 var username = User.FindFirst(ClaimTypes.Name)?.Value;
 
-                if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(username))
+                if (string.IsNullOrEmpty(userId))
                 {
-                    _logger.LogWarning("Токен не содержит необходимых данных о пользователе");
+                    _logger.LogWarning("Токен не содержит userId о пользователе");
+                    return Unauthorized(new { Message = "Недостаточно данных в токене" });
+                }
+
+                if (string.IsNullOrEmpty(username))
+                {
+                    _logger.LogWarning("Токен не содержит username о пользователе");
                     return Unauthorized(new { Message = "Недостаточно данных в токене" });
                 }
 
