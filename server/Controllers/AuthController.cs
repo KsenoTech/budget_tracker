@@ -43,12 +43,44 @@ namespace server.Controllers
 
 
         //[HttpGet("checkAuth")]
-        //[Authorize] // Требует валидный токен проверять при обновлении страницы на реакте
+        //// Требует валидный токен проверять при обновлении страницы на реакте
         //public IActionResult CheckToken()
         //{
         //    var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         //    var email = User.FindFirst(ClaimTypes.Email)?.Value;
         //    return Ok(new { UserId = userId, Email = email, Message = "Token is valid" });
         //}
+
+        // Новый метод для проверки токена
+        [HttpGet("checkAuth")]
+        //[Authorize] // Требует валидный токен
+        public IActionResult CheckAuth()
+        {
+            try
+            {
+                // Извлекаем данные из токена через ClaimsPrincipal
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var username = User.FindFirst(ClaimTypes.Name)?.Value;
+
+                if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(username))
+                {
+                    _logger.LogWarning("Токен не содержит необходимых данных о пользователе");
+                    return Unauthorized(new { Message = "Недостаточно данных в токене" });
+                }
+
+                _logger.LogInformation("Токен валиден для пользователя: {Username}", username);
+                return Ok(new
+                {
+                    UserId = userId,
+                    Username = username,
+                    Message = "Token is valid"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Ошибка при проверке токена");
+                return StatusCode(500, new { Message = "Internal server error" });
+            }
+        }
     }
 }
