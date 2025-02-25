@@ -25,6 +25,12 @@ namespace server.Controllers
         [HttpGet("getAllForOneUserByEmail")]
         public async Task<ActionResult<List<ExpenseCategory>>> GetIncomeCategories(string email)
         {
+            if (string.IsNullOrEmpty(email))
+            {
+                _logger.LogWarning("Email не указан");
+                return BadRequest(new { Message = "Email не указан" });
+            }
+
             var incomeCategories = await _expenseCategoryService.GetCategoriesByEmailAsync(email);
             return Ok(incomeCategories);
         }

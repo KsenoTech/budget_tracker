@@ -33,7 +33,7 @@ const Expenses = () => {
         }
 
         const response = await axios.get(
-          "https://localhost:7007/api/ExpenseCategory/getAllForOneUserByEmail",
+          "https://localhost:7007/api/Expense/getAllForOneUserByEmail",
           {
             params: { email },
             headers: {
@@ -42,9 +42,22 @@ const Expenses = () => {
           }
         );
 
-        setCategories(response.data);
+        if (!Array.isArray(response.data)) {
+          setError("Некорректный формат данных");
+          return;
+        }
+        
+        // Очистите данные, удалив лишние поля
+        const cleanedCategories = response.data.map((category) => ({
+          id: category.id,
+          name: category.name,
+          createdAt: category.createdAt,
+          expenseItems: category.expenseItems || [], // Убедитесь, что expenseItems всегда массив
+        }));
+
+        setCategories(cleanedCategories);
       } catch (err) {
-        setError(err.response?.data?.message || "Ошибка загрузки категорий");
+        setError(err.response?.data?.message );
       } finally {
         setLoading(false);
       }
@@ -87,9 +100,9 @@ const Expenses = () => {
             </ListItem>
             {category.expenseItems.length > 0 && (
               <Box sx={{ pl: 4 }}>
-                <Typography variant="subtitle1" color="textSecondary">
+                {/* <Typography variant="subtitle1" color="textSecondary">
                   Элементы расходов:
-                </Typography>
+                </Typography> */}
                 <List dense>
                   {category.expenseItems.map((item) => (
                     <ListItem key={item.id}>
