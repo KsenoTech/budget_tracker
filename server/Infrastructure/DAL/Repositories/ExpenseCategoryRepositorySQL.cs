@@ -1,17 +1,16 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using server.ApplicationCore.DomModels;
 using server.ApplicationCore.Interfaces.Repositories;
+using System.Linq.Expressions;
 
 namespace server.Infrastructure.DAL.Repositories
 {
-    public class ExpenseCategoryRepositorySQL : IRepository<ExpenseCategory>
+    public class ExpenseCategoryRepositorySQL : IRepository<ExpenseCategory>//, IRepository<ExpenseItem>
     {
         private readonly AccountingForIncomeAndExpensesContext _dbcontext;
         private readonly ILogger _logger;
 
-        public ExpenseCategoryRepositorySQL(AccountingForIncomeAndExpensesContext context,
-                                           ILogger logger)
+        public ExpenseCategoryRepositorySQL(AccountingForIncomeAndExpensesContext context, ILogger logger)
         {
             _dbcontext = context;
             _logger = logger;
@@ -28,16 +27,6 @@ namespace server.Infrastructure.DAL.Repositories
             {
                 return new List<ExpenseCategory>();
             }
-
-            //var incomeCategories = await _dbcontext.IncomeCategories
-            //    .Where(c => c.UserId == userId)
-            //    .Include(c => c.IncomeItems)
-            //    .ToListAsync();
-
-
-            //var incomeItems = await _dbcontext.IncomeItems
-            //    .Where(item => item.IncomeCategoryId == user.)
-            //    .ToListAsync();
 
             var incomeCategories = await _dbcontext.ExpenseCategories
                     .Join(_dbcontext.Clients,
@@ -96,24 +85,7 @@ namespace server.Infrastructure.DAL.Repositories
                 return false;
             }
         }
-        //public async Task<bool> DeleteAsync<TId>(TId id)
-        //{
-        //    try
-        //    {
-        //        var entity = await _dbcontext.IncomeCategories.FindAsync(int.Parse(id.ToString()));
-        //        if (entity != null)
-        //        {
-        //            _dbcontext.IncomeCategories.Remove(entity);
-        //            await _dbcontext.SaveChangesAsync();
-        //            return true;
-        //        }
-        //        return false;
-        //    }
-        //    catch
-        //    {
-        //        return false;
-        //    }
-        //}
+        
 
         public async Task<List<ExpenseCategory>> GetListAsync()
         {

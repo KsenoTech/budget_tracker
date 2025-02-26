@@ -1,4 +1,8 @@
-﻿namespace server.ApplicationCore.DomModels;
+﻿using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
+
+namespace server.ApplicationCore.DomModels;
 
 public partial class ExpenseItem
 {
@@ -11,6 +15,6 @@ public partial class ExpenseItem
     public decimal Amount { get; set; }
 
     public DateTime TransactionDate { get; set; }
-
+    [JsonIgnore]
     public virtual ExpenseCategory ExpenseCategory { get; set; } = null!;
 }

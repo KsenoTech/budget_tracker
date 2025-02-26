@@ -15,12 +15,36 @@ import {
   TextField,
   IconButton,
   Collapse,
+  Grid,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
 } from "@mui/material";
+
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+} from "recharts";
+
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import AddIcon from "@mui/icons-material/Add";
 import axios from "axios";
+import { jwtDecode } from "jwt-decode";
 import { AuthContext } from "../context/AuthContext";
 
 const Expenses = () => {
@@ -30,13 +54,25 @@ const Expenses = () => {
   const [openAddDialog, setOpenAddDialog] = useState(false);
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [categoryName, setCategoryName] = useState("");
-  const [categoryAmount, setCategoryAmount] = useState(""); // Новое состояние для стоимости
+  const [categoryAmount, setCategoryAmount] = useState("");
   const [editingCategory, setEditingCategory] = useState(null);
   const [parentId, setParentId] = useState(null); // Для создания подкатегорий
-  const [expandedCategories, setExpandedCategories] = useState([]); // Состояние для разворачивания категорий
+  const [expandedCategories, setExpandedCategories] = useState([]);
   const { user } = useContext(AuthContext);
 
-  // Функция для получения категорий
+  // Состояние для графиков
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [startDate, setStartDate] = useState(
+    new Date(new Date().setDate(new Date().getDate() - 7)).toISOString().split("T")[0]
+  ); // Начало недели назад
+  const [endDate, setEndDate] = useState(new Date().toISOString().split("T")[0]); // Сегодня
+  const [chartData, setChartData] = useState([]);
+  const [pieData, setPieData] = useState([]);
+  const [totalBudget, setTotalBudget] = useState(0); // Динамический бюджет
+  const [chartType, setChartType] = useState("line"); // Тип графика: line или pie
+
+  const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
+
   const fetchCategories = useCallback(async () => {
     try {
       setLoading(true);
@@ -71,7 +107,7 @@ const Expenses = () => {
         totalAmount: category.expenseItems.reduce(
           (sum, item) => sum + item.amount,
           0
-        ), // Общая сумма трат
+        ),
       }));
       setCategories(cleanedCategories);
     } catch (err) {
@@ -81,9 +117,232 @@ const Expenses = () => {
     }
   }, [user]);
 
+  // Функция для получения данных для линейного графика
+  const fetchChartData = useCallback(async () => {
+    if (!selectedCategory) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      const email = user?.email;
+      const response = await axios.get(
+        "https://localhost:7007/api/Expense/getAllForOneUserByEmail",
+        {
+          params: { email },
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      const selectedCat = response.data.find((cat) => cat.name === selectedCategory);
+      if (selectedCat) {
+        const filteredItems = selectedCat.expenseItems.filter((item) => {
+          const itemDate = new Date(item.transactionDate);
+          return itemDate >= new Date(startDate) && itemDate <= new Date(endDate);
+        });
+        const data = filteredItems.map((item) => ({
+          name: new Date(item.transactionDate).toLocaleDateString(),
+          amount: item.amount,
+        }));
+        setChartData(data);
+
+        // Рассчитываем общий бюджет как сумму трат за период
+        const total = filteredItems.reduce((sum, item) => sum + item.amount, 0);
+        setTotalBudget(total);
+      }
+    } catch (error) {
+      console.error("Ошибка при загрузке данных для графика:", error);
+    }
+  }, [selectedCategory, startDate, endDate, user]);
+
+
+  // Функция для получения данных для круговой диаграммы
+  const fetchPieData = useCallback(async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const email = user?.email;
+      const response = await axios.get(
+        "https://localhost:7007/api/Expense/getAllForOneUserByEmail",
+        {
+          params: { email },
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      const data = response.data.map((cat) => ({
+        name: cat.name,
+        value: cat.expenseItems
+          .filter((item) => {
+            const itemDate = new Date(item.transactionDate);
+            return itemDate >= new Date(startDate) && itemDate <= new Date(endDate);
+          })
+          .reduce((sum, item) => sum + item.amount, 0),
+      })).filter(d => d.value > 0); // Убираем категории без трат
+      setPieData(data);
+
+      // Общий бюджет для круговой диаграммы
+      const total = data.reduce((sum, cat) => sum + cat.value, 0);
+      setTotalBudget(total);
+    } catch (error) {
+      console.error("Ошибка при загрузке данных для круговой диаграммы:", error);
+    }
+  }, [startDate, endDate, user]);
+
   useEffect(() => {
     fetchCategories();
-  }, [fetchCategories]);
+    fetchPieData();
+  }, [fetchCategories, fetchPieData]);
+
+  useEffect(() => {
+    if (chartType === "line") {
+      fetchChartData(); // Обновляем линейный график
+    } else {
+      fetchPieData(); // Обновляем круговую диаграмму
+    }
+  }, [fetchChartData, fetchPieData, chartType]);
+
+  // Создание новой категории
+  const handleCreateCategory = async () => {
+    if (!categoryName.trim()) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("Токен не найден");
+
+      const decodedToken = jwtDecode(token);
+      const userId =
+        decodedToken[
+          "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
+        ];
+
+      const payload = {
+        Name: categoryName,
+        UserId: userId,
+        CreatedAt: new Date().toISOString(),
+        CategoryLimits: [],
+        ExpenseItems: parentId
+          ? [
+              {
+                Name: categoryName,
+                Amount: parseFloat(categoryAmount) || 0,
+                TransactionDate: new Date().toISOString(),
+              },
+            ]
+          : [],
+        ExpenseCategoryId: parentId || null, // Указываем родительскую категорию, если это подкатегория
+      };
+
+      const url = parentId
+        ? "https://localhost:7007/api/Expense/createExpenseItem"
+        : "https://localhost:7007/api/Expense/createCategory";
+
+      await axios.post(url, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setOpenAddDialog(false);
+      setCategoryName("");
+      setCategoryAmount("");
+      setParentId(null);
+      fetchCategories();
+    } catch (error) {
+      console.error("Ошибка при создании категории:", error);
+    }
+  };
+
+  // Создание нового элемента расхода (подкатегории)
+  const handleCreateExpenseItem = async () => {
+    if (!categoryName.trim() || !parentId) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("Токен не найден");
+
+      const decodedToken = jwtDecode(token);
+      const userId =
+        decodedToken[
+          "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
+        ];
+
+      const payload = {
+        name: categoryName,
+        amount: parseFloat(categoryAmount) || 0,
+        transactionDate: new Date().toISOString(),
+        categoryName: categories.find((c) => c.id === parentId)?.name || "",
+      };
+
+      await axios.post(
+        `https://localhost:7007/api/Expense/createExpenseItem?userId=${userId}`,
+        payload,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      setOpenAddDialog(false);
+      setCategoryName("");
+      setCategoryAmount("");
+      setParentId(null);
+      fetchCategories();
+    } catch (error) {
+      console.error("Ошибка при создании элемента расхода:", error);
+    }
+  };
+
+  // Обновление категории или подкатегории
+  const handleUpdateCategory = async () => {
+    if (!categoryName.trim() || !editingCategory) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      let url =
+        editingCategory.amount !== undefined
+          ? `https://localhost:7007/api/Expense/updateExpenseItem/${editingCategory.id}`
+          : `https://localhost:7007/api/Expense/updateCategory/${editingCategory.id}`;
+      let payload =
+        editingCategory.amount !== undefined
+          ? { Name: categoryName, Amount: parseFloat(categoryAmount) }
+          : { Name: categoryName };
+
+      await axios.put(url, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setOpenEditDialog(false);
+      setCategoryName("");
+      setCategoryAmount("");
+      setEditingCategory(null);
+      fetchCategories();
+    } catch (error) {
+      console.error("Ошибка при обновлении категории:", error);
+    }
+  };
+
+  // Удаление категории или подкатегории
+  const handleDeleteCategory = async (id, isSubcategory = false) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("Токен не найден");
+
+      const url = isSubcategory
+        ? `https://localhost:7007/api/Expense/deleteItem/${id}`
+        : `https://localhost:7007/api/Expense/deleteCategory/${id}`;
+
+      await axios.delete(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      fetchCategories();
+    } catch (error) {
+      console.error("Ошибка при удалении:", error);
+    }
+  };
+
+  // Обработка разворачивания/сворачивания категории
+  const handleToggleExpand = (categoryId) => {
+    setExpandedCategories((prevExpanded) =>
+      prevExpanded.includes(categoryId)
+        ? prevExpanded.filter((id) => id !== categoryId)
+        : [...prevExpanded, categoryId]
+    );
+  };
 
   if (loading) {
     return (
@@ -101,103 +360,22 @@ const Expenses = () => {
     );
   }
 
-  // Создание новой категории или подкатегории
-  const handleCreateCategory = async () => {
-    if (!categoryName.trim()) return;
-
-    try {
-      const token = localStorage.getItem("token");
-      const payload = parentId
-        ? { Name: categoryName, ParentId: parentId }
-        : { Name: categoryName };
-
-      await axios.post(
-        "https://localhost:7007/api/Expense/createCategory",
-        payload,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      setOpenAddDialog(false);
-      setCategoryName("");
-      setParentId(null);
-      fetchCategories();
-    } catch (error) {
-      console.error("Ошибка при создании категории:", error);
-    }
-  };
-
-  // Обновление категории или подкатегории
-  const handleUpdateCategory = async () => {
-    if (!categoryName.trim() || !editingCategory) return;
-
-    try {
-      const token = localStorage.getItem("token");
-      let url = `https://localhost:7007/api/Expense/updateCategory/${editingCategory.id}`;
-      let payload = { Name: categoryName };
-
-      // Если это подкатегория, добавляем поле Amount
-      if (editingCategory.amount !== undefined) {
-        url = `https://localhost:7007/api/Expense/updateExpenseItem/${editingCategory.id}`;
-        payload = { Name: categoryName, Amount: parseFloat(categoryAmount) };
-      }
-
-      await axios.put(url, payload, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      setOpenEditDialog(false);
-      setCategoryName("");
-      setCategoryAmount(""); // Очищаем поле стоимости
-      setEditingCategory(null);
-      fetchCategories();
-    } catch (error) {
-      console.error("Ошибка при обновлении категории:", error);
-    }
-  };
-
-  // Удаление категории или подкатегории
-  const handleDeleteCategory = async (categoryId) => {
-    try {
-      const token = localStorage.getItem("token");
-      await axios.delete(
-        `https://localhost:7007/api/Expense/deleteCategory/${categoryId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      fetchCategories();
-    } catch (error) {
-      console.error("Ошибка при удалении категории:", error);
-    }
-  };
-
-  // Обработка разворачивания/сворачивания категории
-  const handleToggleExpand = (categoryId) => {
-    setExpandedCategories((prevExpanded) =>
-      prevExpanded.includes(categoryId)
-        ? prevExpanded.filter((id) => id !== categoryId)
-        : [...prevExpanded, categoryId]
-    );
-  };
-
   return (
     <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, p: 3 }}>
+      {/* calc(100vh - 80px) */}
       <Box
         sx={{
-          flex: 1, // Занимает половину пространства
-          overflowY: "auto", // Добавляем прокрутку
-          maxHeight: "calc(100vh - 80px)", // Ограничиваем высоту для прокрутки
-          borderRight: "1px solid #e0e0e0", // Разделительная линия между панелями
-          pr: 2, // Отступ справа
+          flex: 1,
+          overflowY: "auto",
+          maxHeight: "75vh",
+          borderRight: "1px solid #e0e0e0",
+          pr: 2,
         }}
       >
         <Typography variant="h5" gutterBottom>
           Расходы
         </Typography>
-        
-        {/* Кнопка добавления категории */}
+
         <Button
           variant="contained"
           color="primary"
@@ -211,14 +389,12 @@ const Expenses = () => {
           Добавить категорию
         </Button>
 
-        {/* Список категорий */}
         <List>
           {categories.map((category) => (
             <React.Fragment key={category.id}>
               <ListItem
                 secondaryAction={
                   <>
-                    {/* Кнопка разворачивания/сворачивания */}
                     <IconButton
                       edge="end"
                       aria-label="expand"
@@ -230,20 +406,18 @@ const Expenses = () => {
                         <ExpandMoreIcon />
                       )}
                     </IconButton>
-                    {/* Кнопка редактирования категории */}
                     <IconButton
                       edge="end"
                       aria-label="edit"
                       onClick={() => {
                         setEditingCategory(category);
                         setCategoryName(category.name);
-                        setCategoryAmount(""); // Очищаем поле стоимости для категории
+                        setCategoryAmount("");
                         setOpenEditDialog(true);
                       }}
                     >
                       <EditIcon />
                     </IconButton>
-                    {/* Кнопка удаления категории */}
                     <IconButton
                       edge="end"
                       aria-label="delete"
@@ -256,40 +430,58 @@ const Expenses = () => {
               >
                 <ListItemText
                   primary={`${category.name} - ${category.totalAmount} руб.`}
+                  secondary={`Создано: ${new Date(
+                    category.createdAt
+                  ).toLocaleDateString()}`}
                 />
               </ListItem>
 
-              {/* Подкатегории */}
               <Collapse
                 in={expandedCategories.includes(category.id)}
                 timeout="auto"
                 unmountOnExit
               >
                 <Box sx={{ pl: 4 }}>
+                  {/* Кнопка добавления подкатегории */}
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<AddIcon />}
+                    onClick={() => {
+                      setOpenAddDialog(true);
+                      setCategoryName("");
+                      setCategoryAmount("");
+                      setParentId(category.id);
+                    }}
+                    sx={{ mb: 1 }}
+                  >
+                    Добавить подкатегорию
+                  </Button>
+
                   <List dense>
                     {category.expenseItems.map((item) => (
                       <ListItem
                         key={item.id}
                         secondaryAction={
                           <>
-                            {/* Кнопка редактирования подкатегории */}
                             <IconButton
                               edge="end"
                               aria-label="edit"
                               onClick={() => {
                                 setEditingCategory(item);
                                 setCategoryName(item.name);
-                                setCategoryAmount(item.amount.toString()); // Заполняем поле стоимости
+                                setCategoryAmount(item.amount.toString());
                                 setOpenEditDialog(true);
                               }}
                             >
                               <EditIcon />
                             </IconButton>
-                            {/* Кнопка удаления подкатегории */}
                             <IconButton
                               edge="end"
                               aria-label="delete"
-                              onClick={() => handleDeleteCategory(item.id)}
+                              onClick={() =>
+                                handleDeleteCategory(item.id, true)
+                              }
                             >
                               <DeleteIcon color="error" />
                             </IconButton>
@@ -312,7 +504,6 @@ const Expenses = () => {
           ))}
         </List>
 
-        {/* Диалог добавления категории */}
         <Dialog open={openAddDialog} onClose={() => setOpenAddDialog(false)}>
           <DialogTitle>
             {parentId ? "Добавить подкатегорию" : "Добавить категорию"}
@@ -341,11 +532,16 @@ const Expenses = () => {
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setOpenAddDialog(false)}>Отмена</Button>
-            <Button onClick={handleCreateCategory}>Создать</Button>
+            <Button
+              onClick={
+                parentId ? handleCreateExpenseItem : handleCreateCategory
+              }
+            >
+              Создать
+            </Button>
           </DialogActions>
         </Dialog>
 
-        {/* Диалог редактирования категории или подкатегории */}
         <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)}>
           <DialogTitle>
             {editingCategory?.amount !== undefined
@@ -362,7 +558,7 @@ const Expenses = () => {
               value={categoryName}
               onChange={(e) => setCategoryName(e.target.value)}
             />
-            {editingCategory?.amount !== undefined && ( // Показываем поле стоимости только для подкатегорий
+            {editingCategory?.amount !== undefined && (
               <TextField
                 margin="dense"
                 id="amount"
@@ -386,18 +582,93 @@ const Expenses = () => {
           </Typography>
         )}
       </Box>
-      {/* Правая панель: График трат */}
-      <Box
-        sx={{
-          flex: 1, // Занимает половину пространства
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100%",
-        }}
-      >
-        <Typography variant="h6">График трат</Typography>
-        {/* Здесь можно добавить компонент графика, например, Chart.js или Recharts */}
+      <Box sx={{ flex: 1, height: "100%", p: 2 }}>
+        <Typography variant="h6" gutterBottom align="center">
+          Графики трат
+        </Typography>
+        <Grid container spacing={2}>
+          <Grid item xs={12}>
+            <Box>
+              <RadioGroup
+                row
+                value={chartType}
+                onChange={(e) => setChartType(e.target.value)}
+                sx={{ mb: 2, justifyContent: "center" }}
+              >
+                <FormControlLabel value="line" control={<Radio />} label="Линейный график" />
+                <FormControlLabel value="pie" control={<Radio />} label="Круговая диаграмма" />
+              </RadioGroup>
+
+              {chartType === "line" && (
+                <>
+                  <FormControl fullWidth sx={{ mb: 2 }}>
+                    <InputLabel>Категория</InputLabel>
+                    <Select
+                      value={selectedCategory}
+                      onChange={(e) => setSelectedCategory(e.target.value)}
+                      label="Категория"
+                    >
+                      <MenuItem value="">Выберите категорию</MenuItem>
+                      {categories.map((cat) => (
+                        <MenuItem key={cat.id} value={cat.name}>
+                          {cat.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                  <Box display="flex" gap={2} mb={2}>
+                    <TextField
+                      type="date"
+                      label="Начало периода"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      InputLabelProps={{ shrink: true }}
+                      fullWidth
+                    />
+                    <TextField
+                      type="date"
+                      label="Конец периода"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      InputLabelProps={{ shrink: true }}
+                      fullWidth
+                    />
+                  </Box>
+                  <LineChart width={500} height={300} data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip formatter={(value) => `${value} руб.`} />
+                    <Line type="monotone" dataKey="amount" stroke="#8884d8" />
+                  </LineChart>
+                </>
+              )}
+
+              {chartType === "pie" && (
+                <PieChart width={500} height={300}>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                  >
+                    {pieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => `${value} руб.`} />
+                  <Legend />
+                </PieChart>
+              )}
+              <Typography variant="body2" align="center" sx={{ mt: 2 }}>
+                Общий бюджет за период: {totalBudget} руб.
+              </Typography>
+            </Box>
+          </Grid>
+        </Grid>
       </Box>
     </Box>
   );

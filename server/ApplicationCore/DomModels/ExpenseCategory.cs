@@ -1,4 +1,6 @@
-﻿namespace server.ApplicationCore.DomModels;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace server.ApplicationCore.DomModels;
 
 public partial class ExpenseCategory
 {
@@ -11,8 +13,6 @@ public partial class ExpenseCategory
     public DateTime CreatedAt { get; set; }
 
     public virtual ICollection<CategoryLimit> CategoryLimits { get; set; } = new List<CategoryLimit>();
-
     public virtual ICollection<ExpenseItem> ExpenseItems { get; set; } = new List<ExpenseItem>();
-
     public virtual Client User { get; set; } = null!;
 }

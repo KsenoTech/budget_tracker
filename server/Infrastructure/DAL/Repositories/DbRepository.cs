@@ -10,6 +10,7 @@ namespace server.Infrastructure.DAL.Repositories
 
         private ClientRepositorySQL _clientReposSQL;
         private ExpenseCategoryRepositorySQL _expenseCategorySQL;
+        private ExpenseItemRepositorySQL _expenseItemSQL;
 
 
         public DbRepository(AccountingForIncomeAndExpensesContext dbcontext, ILogger<AccountingForIncomeAndExpensesContext> logger)
@@ -51,7 +52,9 @@ namespace server.Infrastructure.DAL.Repositories
         {
             get
             {
-                throw new NotImplementedException();
+                if (_expenseItemSQL == null)
+                    _expenseItemSQL = new ExpenseItemRepositorySQL(_dbcontext, _logger);
+                return _expenseItemSQL;
             }
         }
 

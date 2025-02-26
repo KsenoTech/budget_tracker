@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using server.ApplicationCore.DomModels;
 using server.ApplicationCore.Interfaces.Services;
 using System.Security.Claims;
+using static server.ApplicationCore.Models.ResponseModels;
 
 namespace server.Controllers
 {
@@ -13,10 +14,10 @@ namespace server.Controllers
     
     public class ExpenseController : Controller
     {
-        private readonly IExpenseCategoryService _expenseCategoryService;
+        private readonly IExpenseService _expenseCategoryService;
         private readonly ILogger<ExpenseController> _logger;
 
-        public ExpenseController(IExpenseCategoryService iexpenseCategoryService, ILogger<ExpenseController> logger)
+        public ExpenseController(IExpenseService iexpenseCategoryService, ILogger<ExpenseController> logger)
         {
             _expenseCategoryService = iexpenseCategoryService;
             _logger = logger;
@@ -36,7 +37,6 @@ namespace server.Controllers
         }
 
 
-
         [HttpGet("debugClaims")]
         public IActionResult DebugClaims()
         {
@@ -44,85 +44,119 @@ namespace server.Controllers
             return Ok(claims);
         }
 
-        //[Authorize]
-        [HttpGet("getAll1")]
-        public async Task<IActionResult> GetAllCategories()
+
+        [HttpPost("createCategory")]
+        public async Task<IActionResult> CreateCategory([FromBody] CreateExpenseCategoryDto dto)
         {
             try
             {
-                var userEmail = User.FindFirst(ClaimTypes.Email)?.Value;
-
-                if (string.IsNullOrEmpty(userEmail))
+                if (dto == null || string.IsNullOrEmpty(dto.Name))
                 {
-                    _logger.LogWarning("User ID not found in claims.");
-                    return BadRequest("User ID not found in claims.");
+                    _logger.LogWarning("Invalid request body.");
+                    return BadRequest(new { Message = "Invalid request body." });
                 }
 
-                _logger.LogInformation("Fetching categories for user ID: {UserId}", userEmail);
-
-                var categories = await _expenseCategoryService.GetCategoriesByEmailAsync(userEmail);
-
-                if (categories == null || !categories.Any())
+                if (dto.CreatedAt == default(DateTime))
                 {
-                    _logger.LogWarning("No categories found for user with ID: {UserId}", userEmail);
-                    return NotFound("No categories found for the user.");
+                    dto.CreatedAt = DateTime.UtcNow;
                 }
 
-                return Ok(categories);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error while fetching categories for user.");
-                return StatusCode(500, "Internal server error.");
-            }
-        }
+                _logger.LogInformation("Received category data: {@Category}", dto);
 
-        //[Authorize]
-        [HttpPost("сreate")]
-        public async Task<IActionResult> CreateCategory([FromBody] ExpenseCategory category)
-        {
-
-            //category.UserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            //var result = await _incomeCategoryService.CreateCategoryAsync(category);
-            //return result ? Ok(new { Message = "Category created" }) : BadRequest(new { Message = "Failed to create category" });
-            try
-            {
-                var userId = User.FindFirst(ClaimTypes.Email)?.Value;
-                if (string.IsNullOrEmpty(userId))
+                // Преобразуем DTO в полноценную модель
+                var category = new ExpenseCategory
                 {
-                    _logger.LogWarning("User ID not found in claims.");
-                    return BadRequest("User ID not found in claims.");
-                }
+                    Name = dto.Name,
+                    UserId = dto.UserId,
+                    CreatedAt = dto.CreatedAt,
+                    CategoryLimits = dto.CategoryLimits?.Select(limit => new CategoryLimit
+                    {
+                        LimitAmount = limit.LimitAmount,
+                        StartDate = limit.StartDate,
+                        EndDate = limit.EndDate
+                    }).ToList() ?? new List<CategoryLimit>(),
 
-                category.UserId = userId;
-                _logger.LogInformation("Creating category with Name: {Name} for user ID: {UserId}", category.Name, userId);
+                    ExpenseItems = dto.ExpenseItems?.Select(item => new ExpenseItem
+                    {
+                        Name = item.Name,
+                        Amount = item.Amount,
+                        TransactionDate = item.TransactionDate
+                    }).ToList() ?? new List<ExpenseItem>()
+                };
+
+                _logger.LogInformation("Creating category with Name: {Name} for user ID: {UserId}", category.Name, dto.UserId);
 
                 var result = await _expenseCategoryService.CreateCategoryAsync(category);
 
                 if (result)
                 {
-                    _logger.LogInformation("Successfully created category with Name: {Name} for user ID: {UserId}", category.Name, userId);
+                    _logger.LogInformation("Successfully created category with Name: {Name} for user ID: {UserId}", category.Name, dto.UserId);
                     return Ok(new { Message = "Category created" });
                 }
                 else
                 {
-                    _logger.LogWarning("Failed to create category with Name: {Name} for user ID: {UserId}", category.Name, userId);
+                    _logger.LogWarning("Failed to create category with Name: {Name} for user ID: {UserId}", category.Name, dto.UserId);
                     return BadRequest(new { Message = "Failed to create category" });
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error while creating category.");
-                return StatusCode(500, "Internal server error.");
+                return StatusCode(500, new { Message = "Internal server error." });
             }
         }
+
+
+        [HttpPost("createExpenseItem")]
+        [Authorize]
+        public async Task<IActionResult> CreateExpenseItem([FromBody] CreateExpenseItem dto)
+        {
+            try
+            {
+                _logger.LogInformation("Создание элемента расхода: {Name} для категории {CategoryName}", dto.Name, dto.CategoryName);
+
+                // Извлекаем UserId из токена
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    _logger.LogWarning("Не удалось извлечь UserId из токена");
+                    return Unauthorized(new { Message = "Недействительный токен" });
+                }
+
+                // Создаем объект элемента расхода (без ExpenseCategoryId пока)
+                var expenseItem = new ExpenseItem
+                {
+                    Name = dto.Name,
+                    Amount = dto.Amount,
+                    TransactionDate = dto.TransactionDate != default ? dto.TransactionDate : DateTime.UtcNow
+                };
+
+                // Передаем категорию по имени и пользователю в сервис
+                var result = await _expenseCategoryService.CreateExpenseItemAsync(expenseItem, userId, dto.CategoryName);
+
+                if (result)
+                {
+                    _logger.LogInformation("Элемент расхода {Name} успешно создан для категории {CategoryName}", dto.Name, dto.CategoryName);
+                    return Ok(new { Message = "Элемент расхода успешно создан" });
+                }
+                else
+                {
+                    _logger.LogWarning("Не удалось создать элемент расхода {Name} для категории {CategoryName}", dto.Name, dto.CategoryName);
+                    return BadRequest(new { Message = "Не удалось создать элемент расхода" });
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Ошибка при создании элемента расхода: {Name}", dto.Name);
+                return StatusCode(500, new { Message = "Внутренняя ошибка сервера" });
+            }
+        }
+
 
         [HttpPut("update")]
         //[Authorize]
         public async Task<IActionResult> UpdateCategory([FromBody] ExpenseCategory category)
         {
-            //var result = await _incomeCategoryService.UpdateCategoryAsync(category);
-            //return result ? Ok(new { Message = "Category updated" }) : BadRequest(new { Message = "Failed to update category" });
             try
             {
                 if (category == null || string.IsNullOrEmpty(category.UserId))
@@ -153,17 +187,43 @@ namespace server.Controllers
             }
         }
 
-        [HttpDelete("delete/{id}")]
-        //[Authorize]
+        [HttpDelete("deleteCategory/{id}")]
+        [Authorize]
         public async Task<IActionResult> DeleteCategory(int id)
         {
-            //var result = await _incomeCategoryService.DeleteCategoryAsync(id);
-            //return result ? Ok(new { Message = "Category deleted" }) : BadRequest(new { Message = "Failed to delete category" });
             try
             {
                 _logger.LogInformation("Deleting category with ID: {Id}", id);
 
                 var result = await _expenseCategoryService.DeleteCategoryAsync(id);
+
+                if (result)
+                {
+                    _logger.LogInformation("Successfully deleted category with ID: {Id}", id);
+                    return Ok(new { Message = "Category deleted" });
+                }
+                else
+                {
+                    _logger.LogWarning("Failed to delete category with ID: {Id}", id);
+                    return BadRequest(new { Message = "Failed to delete category" });
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while deleting category with ID: {Id}", id);
+                return StatusCode(500, "Internal server error.");
+            }
+        }
+
+        [HttpDelete("deleteItem/{id}")]
+        [Authorize]
+        public async Task<IActionResult> DeleteItem(int id)
+        {
+            try
+            {
+                _logger.LogInformation("Deleting category with ID: {Id}", id);
+
+                var result = await _expenseCategoryService.DeleteItemAsync(id);
 
                 if (result)
                 {

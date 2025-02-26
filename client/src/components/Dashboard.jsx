@@ -18,7 +18,7 @@ const Dashboard = () => {
         { text: 'Доходы', icon: <AttachMoney />, path: '/dashboard/incomes' },
         { text: 'Расходы', icon: <MoneyOff />, path: '/dashboard/expenses' },
         { text: 'Лимиты', icon: <Speed />, path: '/dashboard/limits' },
-        // { text: 'Категории трат', icon: <Category />, path: '/dashboard/categories' },
+        { text: 'Категории трат', icon: <Category />, path: '/dashboard/categories' },
     ];
 
     return (

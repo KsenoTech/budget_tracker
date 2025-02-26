@@ -48,7 +48,6 @@ namespace server.Controllers
         {
             try
             {
-
                 if (!HttpContext.Request.Headers.ContainsKey("Authorization"))
                 {
                     _logger.LogWarning("Заголовок Authorization отсутствует");

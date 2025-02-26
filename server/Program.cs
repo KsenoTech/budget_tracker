@@ -15,7 +15,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", builder =>
     {
-        builder.WithOrigins("http://localhost:3000") // Укажите порт вашего React-приложения
+        builder.WithOrigins("http://localhost:3000") // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ React-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
                .AllowAnyMethod()
                .AllowAnyHeader();
     });
@@ -32,15 +32,15 @@ builder.Services.AddControllers().
     AddJsonOptions(x => x.JsonSerializerOptions.ReferenceHandler
     = ReferenceHandler.IgnoreCycles);
 
-// Регистрация зависимостей
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 builder.Services.AddScoped<IDbRepository, DbRepository>();
 builder.Services.AddScoped<IClientService, ClientService>();
-builder.Services.AddScoped<IExpenseCategoryService, ExpenseCategoryService>();
+builder.Services.AddScoped<IExpenseService, ExpenseService>();
 
 builder.Services.AddLogging();
 
 
-// Настройка JWT
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ JWT
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -83,8 +83,8 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddLogging(loggingBuilder =>
 {
-    loggingBuilder.AddConsole(); // Логирование в консоль
-    loggingBuilder.AddDebug();   // Логирование в дебаг-вывод
+    loggingBuilder.AddConsole(); // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+    loggingBuilder.AddDebug();   // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅ
 });
 
 var app = builder.Build();
