@@ -15,6 +15,6 @@ public partial class ExpenseItem
     public decimal Amount { get; set; }
 
     public DateTime TransactionDate { get; set; }
-    [JsonIgnore]
+
     public virtual ExpenseCategory ExpenseCategory { get; set; } = null!;
 }

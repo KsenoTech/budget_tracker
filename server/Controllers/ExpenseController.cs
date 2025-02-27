@@ -23,6 +23,7 @@ namespace server.Controllers
             _logger = logger;
         }
 
+        [Authorize]
         [HttpGet("getAllForOneUserByEmail")]
         public async Task<ActionResult<List<ExpenseCategory>>> GetIncomeCategories(string email)
         {
@@ -37,14 +38,7 @@ namespace server.Controllers
         }
 
 
-        [HttpGet("debugClaims")]
-        public IActionResult DebugClaims()
-        {
-            var claims = User.Claims.Select(c => new { c.Type, c.Value }).ToList();
-            return Ok(claims);
-        }
-
-
+        [Authorize]
         [HttpPost("createCategory")]
         public async Task<IActionResult> CreateCategory([FromBody] CreateExpenseCategoryDto dto)
         {
@@ -153,37 +147,73 @@ namespace server.Controllers
         }
 
 
-        [HttpPut("update")]
-        //[Authorize]
-        public async Task<IActionResult> UpdateCategory([FromBody] ExpenseCategory category)
+        [HttpPut("updateCategory/{id}")]
+        [Authorize]
+        public async Task<IActionResult> UpdateCategory(int id, [FromBody] UpdateExpenseCategoryDto dto)
         {
             try
             {
-                if (category == null || string.IsNullOrEmpty(category.UserId))
+                if (string.IsNullOrEmpty(dto.Name))
                 {
-                    _logger.LogWarning("Invalid or missing data for category update.");
-                    return BadRequest("Invalid or missing data for category update.");
+                    _logger.LogWarning("Missing name for category update with ID: {Id}", id);
+                    return BadRequest("Missing name for category update.");
                 }
 
-                _logger.LogInformation("Updating category with ID: {Id} and Name: {Name}", category.Id, category.Name);
+                _logger.LogInformation("Updating category with ID: {Id} and Name: {Name}", id, dto.Name);
 
-                var result = await _expenseCategoryService.UpdateCategoryAsync(category);
+                var result = await _expenseCategoryService.UpdateCategoryAsync(id, dto.Name);
 
                 if (result)
                 {
-                    _logger.LogInformation("Successfully updated category with ID: {Id}", category.Id);
+                    _logger.LogInformation("Successfully updated category with ID: {Id}", id);
                     return Ok(new { Message = "Category updated" });
                 }
                 else
                 {
-                    _logger.LogWarning("Failed to update category with ID: {Id}", category.Id);
+                    _logger.LogWarning("Failed to update category with ID: {Id}", id);
                     return BadRequest(new { Message = "Failed to update category" });
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error while updating category.");
+                _logger.LogError(ex, "Error while updating category with ID: {Id}", id);
                 return StatusCode(500, "Internal server error.");
+            }
+        }
+
+
+        [HttpPut("updateItem/{id}")]
+        [Authorize]
+        public async Task<IActionResult> UpdateExpenseItem(int id, [FromBody] UpdateExpenseItem dto)
+        {
+            try
+            {
+                _logger.LogInformation("Обновление элемента расхода с ID: {Id}, Name: {Name}", id, dto.Name);
+
+                var expenseItem = new ExpenseItem
+                {
+                    Id = id,
+                    Name = dto.Name,
+                    Amount = dto.Amount
+                };
+
+                var result = await _expenseCategoryService.UpdateItemAsync(expenseItem);
+
+                if (result)
+                {
+                    _logger.LogInformation("Элемент расхода с ID: {Id} успешно обновлен", id);
+                    return Ok(new { Message = "Элемент расхода обновлен" });
+                }
+                else
+                {
+                    _logger.LogWarning("Не удалось обновить элемент расхода с ID: {Id}", id);
+                    return BadRequest(new { Message = "Не удалось обновить элемент расхода" });
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Ошибка при обновлении элемента расхода с ID: {Id}", id);
+                return StatusCode(500, new { Message = "Внутренняя ошибка сервера" });
             }
         }
 

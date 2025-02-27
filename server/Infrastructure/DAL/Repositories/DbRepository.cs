@@ -1,5 +1,6 @@
 ﻿using server.ApplicationCore.DomModels;
 using server.ApplicationCore.Interfaces.Repositories;
+using server.Infrastructure.DAL.Repositories.Expense;
 
 namespace server.Infrastructure.DAL.Repositories
 {

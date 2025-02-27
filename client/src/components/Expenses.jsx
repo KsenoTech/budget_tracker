@@ -63,9 +63,13 @@ const Expenses = () => {
   // Состояние для графиков
   const [selectedCategory, setSelectedCategory] = useState("");
   const [startDate, setStartDate] = useState(
-    new Date(new Date().setDate(new Date().getDate() - 7)).toISOString().split("T")[0]
+    new Date(new Date().setDate(new Date().getDate() - 7))
+      .toISOString()
+      .split("T")[0]
   ); // Начало недели назад
-  const [endDate, setEndDate] = useState(new Date().toISOString().split("T")[0]); // Сегодня
+  const [endDate, setEndDate] = useState(
+    new Date().toISOString().split("T")[0]
+  ); // Сегодня
   const [chartData, setChartData] = useState([]);
   const [pieData, setPieData] = useState([]);
   const [totalBudget, setTotalBudget] = useState(0); // Динамический бюджет
@@ -132,11 +136,15 @@ const Expenses = () => {
         }
       );
 
-      const selectedCat = response.data.find((cat) => cat.name === selectedCategory);
+      const selectedCat = response.data.find(
+        (cat) => cat.name === selectedCategory
+      );
       if (selectedCat) {
         const filteredItems = selectedCat.expenseItems.filter((item) => {
           const itemDate = new Date(item.transactionDate);
-          return itemDate >= new Date(startDate) && itemDate <= new Date(endDate);
+          return (
+            itemDate >= new Date(startDate) && itemDate <= new Date(endDate)
+          );
         });
         const data = filteredItems.map((item) => ({
           name: new Date(item.transactionDate).toLocaleDateString(),
@@ -153,7 +161,6 @@ const Expenses = () => {
     }
   }, [selectedCategory, startDate, endDate, user]);
 
-
   // Функция для получения данных для круговой диаграммы
   const fetchPieData = useCallback(async () => {
     try {
@@ -167,22 +174,29 @@ const Expenses = () => {
         }
       );
 
-      const data = response.data.map((cat) => ({
-        name: cat.name,
-        value: cat.expenseItems
-          .filter((item) => {
-            const itemDate = new Date(item.transactionDate);
-            return itemDate >= new Date(startDate) && itemDate <= new Date(endDate);
-          })
-          .reduce((sum, item) => sum + item.amount, 0),
-      })).filter(d => d.value > 0); // Убираем категории без трат
+      const data = response.data
+        .map((cat) => ({
+          name: cat.name,
+          value: cat.expenseItems
+            .filter((item) => {
+              const itemDate = new Date(item.transactionDate);
+              return (
+                itemDate >= new Date(startDate) && itemDate <= new Date(endDate)
+              );
+            })
+            .reduce((sum, item) => sum + item.amount, 0),
+        }))
+        .filter((d) => d.value > 0); // Убираем категории без трат
       setPieData(data);
 
       // Общий бюджет для круговой диаграммы
       const total = data.reduce((sum, cat) => sum + cat.value, 0);
       setTotalBudget(total);
     } catch (error) {
-      console.error("Ошибка при загрузке данных для круговой диаграммы:", error);
+      console.error(
+        "Ошибка при загрузке данных для круговой диаграммы:",
+        error
+      );
     }
   }, [startDate, endDate, user]);
 
@@ -288,19 +302,20 @@ const Expenses = () => {
   };
 
   // Обновление категории или подкатегории
-  const handleUpdateCategory = async () => {
+  const handleUpdateCategory = async (isSubcategory = false) => {
     if (!categoryName.trim() || !editingCategory) return;
 
     try {
       const token = localStorage.getItem("token");
-      let url =
-        editingCategory.amount !== undefined
-          ? `https://localhost:7007/api/Expense/updateExpenseItem/${editingCategory.id}`
-          : `https://localhost:7007/api/Expense/updateCategory/${editingCategory.id}`;
-      let payload =
-        editingCategory.amount !== undefined
-          ? { Name: categoryName, Amount: parseFloat(categoryAmount) }
-          : { Name: categoryName };
+      if (!token) throw new Error("Токен не найден");
+
+      const url = isSubcategory
+        ? `https://localhost:7007/api/Expense/updateItem/${editingCategory.id}`
+        : `https://localhost:7007/api/Expense/updateCategory/${editingCategory.id}`;
+
+      const payload = isSubcategory
+        ? { name: categoryName, amount: parseFloat(categoryAmount) || 0 }
+        : { name: categoryName }; // Только имя для категории
 
       await axios.put(url, payload, {
         headers: { Authorization: `Bearer ${token}` },
@@ -312,7 +327,7 @@ const Expenses = () => {
       setEditingCategory(null);
       fetchCategories();
     } catch (error) {
-      console.error("Ошибка при обновлении категории:", error);
+      console.error("Ошибка при обновлении:", error);
     }
   };
 
@@ -572,7 +587,13 @@ const Expenses = () => {
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setOpenEditDialog(false)}>Отмена</Button>
-            <Button onClick={handleUpdateCategory}>Сохранить</Button>
+            <Button
+              onClick={() =>
+                handleUpdateCategory(editingCategory?.amount !== undefined)
+              }
+            >
+              Сохранить
+            </Button>
           </DialogActions>
         </Dialog>
 
@@ -595,8 +616,16 @@ const Expenses = () => {
                 onChange={(e) => setChartType(e.target.value)}
                 sx={{ mb: 2, justifyContent: "center" }}
               >
-                <FormControlLabel value="line" control={<Radio />} label="Линейный график" />
-                <FormControlLabel value="pie" control={<Radio />} label="Круговая диаграмма" />
+                <FormControlLabel
+                  value="line"
+                  control={<Radio />}
+                  label="Линейный график"
+                />
+                <FormControlLabel
+                  value="pie"
+                  control={<Radio />}
+                  label="Круговая диаграмма"
+                />
               </RadioGroup>
 
               {chartType === "line" && (
@@ -653,10 +682,15 @@ const Expenses = () => {
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
-                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                    label={({ name, percent }) =>
+                      `${name} (${(percent * 100).toFixed(0)}%)`
+                    }
                   >
                     {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={COLORS[index % COLORS.length]}
+                      />
                     ))}
                   </Pie>
                   <Tooltip formatter={(value) => `${value} руб.`} />

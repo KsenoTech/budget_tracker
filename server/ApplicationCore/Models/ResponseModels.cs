@@ -47,7 +47,24 @@ namespace server.ApplicationCore.Models
                 public string Name { get; set; } = null!;
                 public decimal Amount { get; set; }
                 public DateTime TransactionDate { get; set; }
-                public string CategoryName { get; set; } = null!; // Название категории вместо ID
+                public string CategoryName { get; set; } = null!;
+            }
+
+            public class UpdateExpenseItem
+            {
+                public string Name { get; set; } = null!;
+                public decimal Amount { get; set; }
+            }
+
+            public class UpdateExpenseCategoryDto
+            {
+                public string Name { get; set; } = null!; // Только имя
+            }
+
+            public class UpdateExpenseItemDto
+            {
+                public string Name { get; set; } = null!;
+                public decimal Amount { get; set; }
             }
 
 

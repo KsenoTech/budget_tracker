@@ -2,7 +2,7 @@
 using server.ApplicationCore.DomModels;
 using server.ApplicationCore.Interfaces.Repositories;
 
-namespace server.Infrastructure.DAL.Repositories
+namespace server.Infrastructure.DAL.Repositories.Expense
 {
     public class ExpenseItemRepositorySQL : IRepository<ExpenseItem>
     {
@@ -92,9 +92,19 @@ namespace server.Infrastructure.DAL.Repositories
             throw new NotImplementedException();
         }
 
-        public Task<bool> UpdateAsync(ExpenseItem request)
+        public async Task<bool> UpdateAsync(ExpenseItem request)
         {
-            throw new NotImplementedException();
+            try
+            {
+                _logger.LogInformation("Updating income category with Id: {Id}", request.Id);
+                _dbcontext.Entry(request).State = EntityState.Modified;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while updating income category with Id: {Id}", request.Id);
+                return false;
+            }
         }
     }
 }

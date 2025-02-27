@@ -6,9 +6,13 @@ namespace server.ApplicationCore.Interfaces.Services
     {
         Task<bool> CreateCategoryAsync(ExpenseCategory category);
         Task<bool> CreateExpenseItemAsync(ExpenseItem expenseItem, string userId, string categoryName);
+
         Task<bool> DeleteCategoryAsync(int id);
         Task<bool> DeleteItemAsync(int id);
+
         Task<List<ExpenseCategory>> GetCategoriesByEmailAsync(string email);
-        Task<bool> UpdateCategoryAsync(ExpenseCategory category);
+
+        Task<bool> UpdateCategoryAsync(int id, string name);
+        Task<bool> UpdateItemAsync(ExpenseItem category);
     }
 }

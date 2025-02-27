@@ -59,16 +59,47 @@ namespace server.Infrastructure.BLL.Services
             return await _dbcontext.ExpenseCategories.GetByUserEmailAsync(email);
         }
 
-        public async Task<bool> UpdateCategoryAsync(ExpenseCategory category)
+        public async Task<bool> UpdateCategoryAsync(int id, string name)
+        {
+            try
+            {
+                var existingCategory = await _dbcontext.ExpenseCategories.GetByIdAsync(id);
+                if (existingCategory == null)
+                {
+                    _logger.LogWarning("Category with ID {Id} not found", id);
+                    return false;
+                }
+
+                existingCategory.Name = name;
+
+                var result = await _dbcontext.ExpenseCategories.UpdateAsync(existingCategory);
+                if (result)
+                {
+                    await _dbcontext.SaveAsync();
+                    _logger.LogInformation("Category with ID {Id} successfully updated", id);
+                    return true;
+                }
+
+                _logger.LogWarning("Failed to update category with ID {Id}", id);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating category with ID {Id}", id);
+                return false;
+            }
+        }
+
+        public async Task<bool> UpdateItemAsync(ExpenseItem category)
         {
             // Обновляем существующую категорию
-            var existingCategory = await _dbcontext.ExpenseCategories.GetByIdAsync(category.Id);
-            if (existingCategory == null) return false;
+            var existingItem = await _dbcontext.ExpenseItems.GetByIdAsync(category.Id);
+            if (existingItem == null) return false;
 
-            existingCategory.Name = category.Name; // Обновляем необходимые поля
-            //existingCategory.UpdatedAt = DateTime.UtcNow; // Можно добавить поле UpdatedAt
+            existingItem.Name = category.Name; // Обновляем необходимые поля
+            existingItem.Amount = category.Amount;
 
-            var result = await _dbcontext.ExpenseCategories.UpdateAsync(existingCategory);
+            var result = await _dbcontext.ExpenseItems.UpdateAsync(existingItem);
             if (result)
             {
                 await _dbcontext.SaveAsync(); // Сохраняем изменения в базе данных
@@ -117,5 +148,6 @@ namespace server.Infrastructure.BLL.Services
                 return false;
             }
         }
+
     }
 }

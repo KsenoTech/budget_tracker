@@ -1,11 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using server.ApplicationCore.DomModels;
 using server.ApplicationCore.Interfaces.Repositories;
-using System.Linq.Expressions;
 
-namespace server.Infrastructure.DAL.Repositories
+namespace server.Infrastructure.DAL.Repositories.Expense
 {
-    public class ExpenseCategoryRepositorySQL : IRepository<ExpenseCategory>//, IRepository<ExpenseItem>
+    public class ExpenseCategoryRepositorySQL : IRepository<ExpenseCategory>
     {
         private readonly AccountingForIncomeAndExpensesContext _dbcontext;
         private readonly ILogger _logger;
@@ -17,7 +16,6 @@ namespace server.Infrastructure.DAL.Repositories
         }
         public async Task<List<ExpenseCategory>> GetByUserEmailAsync(string email)
         {
-            // Предполагается, что у вас есть таблица Users или аналогичная связь
             var userId = await _dbcontext.Clients
                 .Where(c => c.Email == email)
                 .Select(c => c.Id)
