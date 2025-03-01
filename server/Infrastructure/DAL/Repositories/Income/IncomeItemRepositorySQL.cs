@@ -2,32 +2,31 @@
 using server.ApplicationCore.DomModels;
 using server.ApplicationCore.Interfaces.Repositories;
 
-namespace server.Infrastructure.DAL.Repositories.Expense
+namespace server.Infrastructure.DAL.Repositories.Income
 {
-    public class ExpenseItemRepositorySQL : IRepository<ExpenseItem>
+    public class IncomeItemRepositorySQL : IRepository<IncomeItem>
     {
         private readonly AccountingForIncomeAndExpensesContext _dbcontext;
         private readonly ILogger _logger;
 
-        public ExpenseItemRepositorySQL(AccountingForIncomeAndExpensesContext context, ILogger logger)
+        public IncomeItemRepositorySQL(AccountingForIncomeAndExpensesContext context, ILogger logger)
         {
             _dbcontext = context;
             _logger = logger;
         }
 
-        
-        public async Task<bool> CreateAsync(ExpenseItem entity)
+        public async Task<bool> CreateAsync(IncomeItem entity)
         {
             try
             {
-                _logger.LogInformation("Creating expense category with Name: {Name}", entity.Name);
-                await _dbcontext.ExpenseItems.AddAsync(entity);
+                _logger.LogInformation("Creating IncomeItem with Name: {Name}", entity.Name);
+                await _dbcontext.IncomeItems.AddAsync(entity);
                 await _dbcontext.SaveChangesAsync();
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error while creating income category");
+                _logger.LogError(ex, "Error while creating IncomeItem");
                 return false;
             }
         }
@@ -37,62 +36,62 @@ namespace server.Infrastructure.DAL.Repositories.Expense
             var category = await GetByIdAsync(id);
             if (category == null)
             {
-                _logger.LogWarning("Attempted to delete non-existent income category with Id: {Id}", id);
+                _logger.LogWarning("Attempted to delete non-existent income item with Id: {Id}", id);
                 return false;
             }
 
             try
             {
-                _logger.LogInformation("Deleting income category with Id: {Id}", category.Id);
-                _dbcontext.ExpenseItems.Remove(category);
+                _logger.LogInformation("Deleting income item with Id: {Id}", category.Id);
+                _dbcontext.IncomeItems.Remove(category);
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error while deleting income category with Id: {Id}", category.Id);
+                _logger.LogError(ex, "Error while deleting income item with Id: {Id}", category.Id);
                 return false;
             }
         }
 
-        public async Task<ExpenseItem> GetByIdAsync<TId>(TId id)
+        public async Task<IncomeItem> GetByIdAsync<TId>(TId id)
         {
             try
             {
-                _logger.LogInformation("Fetching income category by Id: {Id}", id);
+                _logger.LogInformation("Fetching income item by Id: {Id}", id);
 
                 if (id is int intId)
                 {
-                    return await _dbcontext.ExpenseItems
+                    return await _dbcontext.IncomeItems
                                 .FirstOrDefaultAsync(c => c.Id == intId);
                 }
                 else
                 {
-                    return new ExpenseItem();
+                    return new IncomeItem();
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error while fetching income category by Id: {Id}", id);
+                _logger.LogError(ex, "Error while fetching income item by Id: {Id}", id);
                 return null;
             }
         }
 
-        public Task<List<ExpenseItem>> GetByUserEmailAsync(string email)
+        public Task<List<IncomeItem>> GetByUserEmailAsync(string email)
         {
             throw new NotImplementedException();
         }
 
-        public Task<List<ExpenseItem>> GetByUserIdAsync(string userId)
+        public Task<List<IncomeItem>> GetByUserIdAsync(string userId)
         {
             throw new NotImplementedException();
         }
 
-        public Task<List<ExpenseItem>> GetListAsync()
+        public Task<List<IncomeItem>> GetListAsync()
         {
             throw new NotImplementedException();
         }
 
-        public async Task<bool> UpdateAsync(ExpenseItem request)
+        public async Task<bool> UpdateAsync(IncomeItem request)
         {
             try
             {

@@ -6,7 +6,7 @@ import Dashboard from './components/Dashboard';
 import Incomes from './components/Incomes';
 import Expenses from './components/Expenses';
 import Limits from './components/Limits';
-import Categories from './components/Categories';
+import GeneralStatistics from './components/GeneralStatistics';
 import PrivateRoute from './components/PrivateRoute';
 
 function App() {
@@ -19,7 +19,7 @@ function App() {
                         <Route path="incomes" element={<Incomes />} />
                         <Route path="expenses" element={<Expenses />} />
                         <Route path="limits" element={<Limits />} />
-                        <Route path="categories" element={<Categories />} />
+                        <Route path="generalstatistics" element={<GeneralStatistics />} />
                         <Route path="" element={<Navigate to="/dashboard/incomes" />} />
                     </Route>
                     <Route path="/" element={<Navigate to="/auth" />} />

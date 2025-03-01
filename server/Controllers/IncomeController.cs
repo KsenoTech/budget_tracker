@@ -11,21 +11,20 @@ namespace server.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [EnableCors]
-    
-    public class ExpenseController : Controller
+    public class IncomeController : Controller
     {
-        private readonly IExpenseService _expenseCategoryService;
-        private readonly ILogger<ExpenseController> _logger;
+        private readonly IIncomeService _incomeService;
+        private readonly ILogger<IncomeController> _logger;
 
-        public ExpenseController(IExpenseService iexpenseCategoryService, ILogger<ExpenseController> logger)
+        public IncomeController(IIncomeService incomeService, ILogger<IncomeController> logger)
         {
-            _expenseCategoryService = iexpenseCategoryService;
+            _incomeService = incomeService;
             _logger = logger;
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpGet("getAllForOneUserByEmail")]
-        public async Task<ActionResult<List<ExpenseCategory>>> GetIncomeCategories(string email)
+        public async Task<ActionResult<List<IncomeCategory>>> GetIncomeCategories(string email)
         {
             if (string.IsNullOrEmpty(email))
             {
@@ -33,12 +32,11 @@ namespace server.Controllers
                 return BadRequest(new { Message = "Email не указан" });
             }
 
-            var incomeCategories = await _expenseCategoryService.GetCategoriesByEmailAsync(email);
+            var incomeCategories = await _incomeService.GetCategoriesByEmailAsync(email);
             return Ok(incomeCategories);
         }
 
-
-        [Authorize]
+        //[Authorize]
         [HttpPost("createCategory")]
         public async Task<IActionResult> CreateCategory([FromBody] CreateCategory dto)
         {
@@ -57,8 +55,7 @@ namespace server.Controllers
 
                 _logger.LogInformation("Received category data: {@Category}", dto);
 
-                // Преобразуем DTO в полноценную модель
-                var category = new ExpenseCategory
+                var category = new IncomeCategory
                 {
                     Name = dto.Name,
                     UserId = dto.UserId,
@@ -67,7 +64,7 @@ namespace server.Controllers
 
                 _logger.LogInformation("Creating category with Name: {Name} for user ID: {UserId}", category.Name, dto.UserId);
 
-                var result = await _expenseCategoryService.CreateCategoryAsync(category);
+                var result = await _incomeService.CreateCategoryAsync(category);
 
                 if (result)
                 {
@@ -87,16 +84,14 @@ namespace server.Controllers
             }
         }
 
-
-        [HttpPost("createExpenseItem")]
-        [Authorize]
-        public async Task<IActionResult> CreateExpenseItem([FromBody] CreateItem dto)
+        [HttpPost("createIncomeItem")]
+        //[Authorize]
+        public async Task<IActionResult> CreateIncomeItem([FromBody] CreateItem dto)
         {
             try
             {
-                _logger.LogInformation("Создание элемента расхода: {Name} для категории {CategoryName}", dto.Name, dto.CategoryName);
+                _logger.LogInformation("Создание элемента дохода: {Name} для категории {CategoryName}", dto.Name, dto.CategoryName);
 
-                // Извлекаем UserId из токена
                 var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 if (string.IsNullOrEmpty(userId))
                 {
@@ -104,38 +99,36 @@ namespace server.Controllers
                     return Unauthorized(new { Message = "Недействительный токен" });
                 }
 
-                // Создаем объект элемента расхода (без ExpenseCategoryId пока)
-                var expenseItem = new ExpenseItem
+                var incomeItem = new IncomeItem
                 {
                     Name = dto.Name,
                     Amount = dto.Amount,
                     TransactionDate = dto.TransactionDate != default ? dto.TransactionDate : DateTime.UtcNow
                 };
 
-                // Передаем категорию по имени и пользователю в сервис
-                var result = await _expenseCategoryService.CreateExpenseItemAsync(expenseItem, userId, dto.CategoryName);
+                var result = await _incomeService.CreateItemAsync(incomeItem, userId, dto.CategoryName);
 
                 if (result)
                 {
-                    _logger.LogInformation("Элемент расхода {Name} успешно создан для категории {CategoryName}", dto.Name, dto.CategoryName);
-                    return Ok(new { Message = "Элемент расхода успешно создан" });
+                    _logger.LogInformation("Элемент дохода {Name} успешно создан для категории {CategoryName}", dto.Name, dto.CategoryName);
+                    return Ok(new { Message = "Элемент дохода успешно создан" });
                 }
                 else
                 {
-                    _logger.LogWarning("Не удалось создать элемент расхода {Name} для категории {CategoryName}", dto.Name, dto.CategoryName);
-                    return BadRequest(new { Message = "Не удалось создать элемент расхода" });
+                    _logger.LogWarning("Не удалось создать элемент дохода {Name} для категории {CategoryName}", dto.Name, dto.CategoryName);
+                    return BadRequest(new { Message = "Не удалось создать элемент дохода" });
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Ошибка при создании элемента расхода: {Name}", dto.Name);
+                _logger.LogError(ex, "Ошибка при создании элемента дохода: {Name}", dto.Name);
                 return StatusCode(500, new { Message = "Внутренняя ошибка сервера" });
             }
         }
 
 
         [HttpPut("updateCategory/{id}")]
-        [Authorize]
+        //[Authorize]
         public async Task<IActionResult> UpdateCategory(int id, [FromBody] UpdateCategory dto)
         {
             try
@@ -148,7 +141,7 @@ namespace server.Controllers
 
                 _logger.LogInformation("Updating category with ID: {Id} and Name: {Name}", id, dto.Name);
 
-                var result = await _expenseCategoryService.UpdateCategoryAsync(id, dto.Name);
+                var result = await _incomeService.UpdateCategoryAsync(id, dto.Name);
 
                 if (result)
                 {
@@ -168,51 +161,50 @@ namespace server.Controllers
             }
         }
 
-
         [HttpPut("updateItem/{id}")]
-        [Authorize]
-        public async Task<IActionResult> UpdateExpenseItem(int id, [FromBody] UpdateItem dto)
+        //[Authorize]
+        public async Task<IActionResult> UpdateIncomeItem(int id, [FromBody] UpdateItem dto)
         {
             try
             {
-                _logger.LogInformation("Обновление элемента расхода с ID: {Id}, Name: {Name}", id, dto.Name);
+                _logger.LogInformation("Updating income item with ID: {Id}, Name: {Name}", id, dto.Name);
 
-                var expenseItem = new ExpenseItem
+                var incomeItem = new IncomeItem
                 {
                     Id = id,
                     Name = dto.Name,
                     Amount = dto.Amount
                 };
 
-                var result = await _expenseCategoryService.UpdateItemAsync(expenseItem);
+                var result = await _incomeService.UpdateItemAsync(incomeItem);
 
                 if (result)
                 {
-                    _logger.LogInformation("Элемент расхода с ID: {Id} успешно обновлен", id);
-                    return Ok(new { Message = "Элемент расхода обновлен" });
+                    _logger.LogInformation("Successfully updated income item with ID: {Id}", id);
+                    return Ok(new { Message = "Income item updated" });
                 }
                 else
                 {
-                    _logger.LogWarning("Не удалось обновить элемент расхода с ID: {Id}", id);
-                    return BadRequest(new { Message = "Не удалось обновить элемент расхода" });
+                    _logger.LogWarning("Failed to update income item with ID: {Id}", id);
+                    return BadRequest(new { Message = "Failed to update income item" });
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Ошибка при обновлении элемента расхода с ID: {Id}", id);
-                return StatusCode(500, new { Message = "Внутренняя ошибка сервера" });
+                _logger.LogError(ex, "Error while updating income item with ID: {Id}", id);
+                return StatusCode(500, "Internal server error.");
             }
         }
 
         [HttpDelete("deleteCategory/{id}")]
-        [Authorize]
+        //[Authorize]
         public async Task<IActionResult> DeleteCategory(int id)
         {
             try
             {
                 _logger.LogInformation("Deleting category with ID: {Id}", id);
 
-                var result = await _expenseCategoryService.DeleteCategoryAsync(id);
+                var result = await _incomeService.DeleteCategoryAsync(id);
 
                 if (result)
                 {
@@ -233,29 +225,29 @@ namespace server.Controllers
         }
 
         [HttpDelete("deleteItem/{id}")]
-        [Authorize]
+        //[Authorize]
         public async Task<IActionResult> DeleteItem(int id)
         {
             try
             {
-                _logger.LogInformation("Deleting category with ID: {Id}", id);
+                _logger.LogInformation("Deleting income item with ID: {Id}", id);
 
-                var result = await _expenseCategoryService.DeleteItemAsync(id);
+                var result = await _incomeService.DeleteItemAsync(id);
 
                 if (result)
                 {
-                    _logger.LogInformation("Successfully deleted category with ID: {Id}", id);
-                    return Ok(new { Message = "Category deleted" });
+                    _logger.LogInformation("Successfully deleted income item with ID: {Id}", id);
+                    return Ok(new { Message = "Income item deleted" });
                 }
                 else
                 {
-                    _logger.LogWarning("Failed to delete category with ID: {Id}", id);
-                    return BadRequest(new { Message = "Failed to delete category" });
+                    _logger.LogWarning("Failed to delete income item with ID: {Id}", id);
+                    return BadRequest(new { Message = "Failed to delete income item" });
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error while deleting category with ID: {Id}", id);
+                _logger.LogError(ex, "Error while deleting income item with ID: {Id}", id);
                 return StatusCode(500, "Internal server error.");
             }
         }

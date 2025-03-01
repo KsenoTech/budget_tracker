@@ -4,6 +4,7 @@ namespace server.ApplicationCore.Models
 {
     public class ResponseModels
     {
+        #region AUTH
         public class RegisterDto
         {
             public string UserName { get; set; }
@@ -15,34 +16,27 @@ namespace server.ApplicationCore.Models
         {
             public string Token { get; set; }
         }
+        #endregion
 
 
-        #region ExpenseCategory
-            public class CreateExpenseCategoryDto
+        #region EXPENSE
+            
+        #endregion
+
+
+        #region INCOME
+
+        #endregion
+
+
+        #region UNION
+            public class CreateCategory
             {
                 public string Name { get; set; } = null!;
                 public string UserId { get; set; } = null!;
                 public DateTime CreatedAt { get; set; }
-                public List<CategoryLimitDto> CategoryLimits { get; set; } = new List<CategoryLimitDto>();
-                public List<ExpenseItemDto> ExpenseItems { get; set; } = new List<ExpenseItemDto>();
             }
-            public class CategoryLimitDto
-            {
-                public decimal LimitAmount { get; set; }
-                public DateTime StartDate { get; set; }
-                public DateTime EndDate { get; set; }
-            }
-            public class ExpenseItemDto
-            {
-                public string Name { get; set; } = null!;
-                public decimal Amount { get; set; }
-                public DateTime TransactionDate { get; set; }
-            }
-        #endregion
-
-
-        #region
-            public class CreateExpenseItem
+            public class CreateItem
             {
                 public string Name { get; set; } = null!;
                 public decimal Amount { get; set; }
@@ -50,25 +44,16 @@ namespace server.ApplicationCore.Models
                 public string CategoryName { get; set; } = null!;
             }
 
-            public class UpdateExpenseItem
+            public class UpdateCategory
+            {
+                public string Name { get; set; } = null!;
+            }
+            
+            public class UpdateItem
             {
                 public string Name { get; set; } = null!;
                 public decimal Amount { get; set; }
             }
-
-            public class UpdateExpenseCategoryDto
-            {
-                public string Name { get; set; } = null!; // Только имя
-            }
-
-            public class UpdateExpenseItemDto
-            {
-                public string Name { get; set; } = null!;
-                public decimal Amount { get; set; }
-            }
-
-
         #endregion
-
     }
 }

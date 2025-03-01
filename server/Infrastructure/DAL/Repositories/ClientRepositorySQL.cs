@@ -56,12 +56,12 @@ namespace server.Infrastructure.DAL.Repositories
             throw new NotImplementedException();
         }
 
-        public Task<List<ExpenseCategory>> GetByUserIdAsync(string userId)
+        public Task<List<Client>> GetByUserIdAsync(string userId)
         {
             throw new NotImplementedException();
         }
 
-        public Task<List<ExpenseCategory>> GetByUserEmailAsync(string email)
+        public Task<List<Client>> GetByUserEmailAsync(string email)
         {
             throw new NotImplementedException();
         }

@@ -14,6 +14,8 @@ namespace server.Infrastructure.DAL.Repositories.Expense
             _dbcontext = context;
             _logger = logger;
         }
+
+
         public async Task<List<ExpenseCategory>> GetByUserEmailAsync(string email)
         {
             var userId = await _dbcontext.Clients
@@ -57,7 +59,7 @@ namespace server.Infrastructure.DAL.Repositories.Expense
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error while creating income category");
+                _logger.LogError(ex, "Error while creating expense category");
                 return false;
             }
         }
@@ -67,19 +69,19 @@ namespace server.Infrastructure.DAL.Repositories.Expense
             var category = await GetByIdAsync(id);
             if (category == null)
             {
-                _logger.LogWarning("Attempted to delete non-existent income category with Id: {Id}", id);
+                _logger.LogWarning("Attempted to delete non-existent expense category with Id: {Id}", id);
                 return false;
             }
 
             try
             {
-                _logger.LogInformation("Deleting income category with Id: {Id}", category.Id);
+                _logger.LogInformation("Deleting expense category with Id: {Id}", category.Id);
                 _dbcontext.ExpenseCategories.Remove(category);
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error while deleting income category with Id: {Id}", category.Id);
+                _logger.LogError(ex, "Error while deleting expense category with Id: {Id}", category.Id);
                 return false;
             }
         }
@@ -89,7 +91,7 @@ namespace server.Infrastructure.DAL.Repositories.Expense
         {
             try
             {
-                _logger.LogInformation("Fetching all income categories");
+                _logger.LogInformation("Fetching all expense categories");
                 return await _dbcontext.ExpenseCategories
                 .Include(ic => ic.ExpenseItems) // Включаем связанные IncomeItems
                 .ToListAsync();
@@ -105,7 +107,7 @@ namespace server.Infrastructure.DAL.Repositories.Expense
         {
             try
             {
-                _logger.LogInformation("Fetching income category by Id: {Id}", id);
+                _logger.LogInformation("Fetching expense category by Id: {Id}", id);
 
                 if (id is int intId)
                 {
@@ -121,7 +123,7 @@ namespace server.Infrastructure.DAL.Repositories.Expense
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error while fetching income category by Id: {Id}", id);
+                _logger.LogError(ex, "Error while fetching expense category by Id: {Id}", id);
                 return null;
             }
         }
@@ -130,13 +132,13 @@ namespace server.Infrastructure.DAL.Repositories.Expense
         {
             try
             {
-                _logger.LogInformation("Updating income category with Id: {Id}", request.Id);
+                _logger.LogInformation("Updating expense category with Id: {Id}", request.Id);
                 _dbcontext.Entry(request).State = EntityState.Modified;
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error while updating income category with Id: {Id}", request.Id);
+                _logger.LogError(ex, "Error while updating expense category with Id: {Id}", request.Id);
                 return false;
             }
         }
@@ -145,7 +147,7 @@ namespace server.Infrastructure.DAL.Repositories.Expense
         {
             try
             {
-                _logger.LogInformation("Fetching income categories for user with UserId: {UserId}", userId);
+                _logger.LogInformation("Fetching expense categories for user with UserId: {UserId}", userId);
                 return await _dbcontext.ExpenseCategories
                     .Where(c => c.UserId == userId)
                     .Include(c => c.ExpenseItems)
@@ -153,7 +155,7 @@ namespace server.Infrastructure.DAL.Repositories.Expense
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error while fetching income categories for user with UserId: {UserId}", userId);
+                _logger.LogError(ex, "Error while fetching expense categories for user with UserId: {UserId}", userId);
                 return new List<ExpenseCategory>();
             }
         }

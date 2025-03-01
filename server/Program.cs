@@ -15,7 +15,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", builder =>
     {
-        builder.WithOrigins("http://localhost:3000") // ������� ���� ������ React-����������
+        builder.WithOrigins("http://localhost:3000") 
                .AllowAnyMethod()
                .AllowAnyHeader();
     });
@@ -32,15 +32,17 @@ builder.Services.AddControllers().
     AddJsonOptions(x => x.JsonSerializerOptions.ReferenceHandler
     = ReferenceHandler.IgnoreCycles);
 
-// ����������� ������������
+//DI
 builder.Services.AddScoped<IDbRepository, DbRepository>();
 builder.Services.AddScoped<IClientService, ClientService>();
 builder.Services.AddScoped<IExpenseService, ExpenseService>();
 
+builder.Services.AddScoped<IIncomeService, IncomeService>();
+
 builder.Services.AddLogging();
 
 
-// ��������� JWT
+// настройка JWT
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -83,8 +85,8 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddLogging(loggingBuilder =>
 {
-    loggingBuilder.AddConsole(); // ����������� � �������
-    loggingBuilder.AddDebug();   // ����������� � �����-�����
+    loggingBuilder.AddConsole(); 
+    loggingBuilder.AddDebug();  
 });
 
 var app = builder.Build();

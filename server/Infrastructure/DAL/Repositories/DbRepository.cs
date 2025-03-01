@@ -1,6 +1,7 @@
 ﻿using server.ApplicationCore.DomModels;
 using server.ApplicationCore.Interfaces.Repositories;
 using server.Infrastructure.DAL.Repositories.Expense;
+using server.Infrastructure.DAL.Repositories.Income;
 
 namespace server.Infrastructure.DAL.Repositories
 {
@@ -10,8 +11,12 @@ namespace server.Infrastructure.DAL.Repositories
         private readonly ILogger<AccountingForIncomeAndExpensesContext> _logger;
 
         private ClientRepositorySQL _clientReposSQL;
+
         private ExpenseCategoryRepositorySQL _expenseCategorySQL;
         private ExpenseItemRepositorySQL _expenseItemSQL;
+
+        private IncomeCategoryRepositorySQL _incomeCategorySQL;
+        private IncomeItemRepositorySQL _incomeItemSQL;
 
 
         public DbRepository(AccountingForIncomeAndExpensesContext dbcontext, ILogger<AccountingForIncomeAndExpensesContext> logger)
@@ -63,7 +68,9 @@ namespace server.Infrastructure.DAL.Repositories
         {
             get
             {
-                throw new NotImplementedException();
+                if (_incomeCategorySQL == null)
+                    _incomeCategorySQL = new IncomeCategoryRepositorySQL(_dbcontext, _logger);
+                return _incomeCategorySQL;
             }
         }
 
@@ -71,7 +78,9 @@ namespace server.Infrastructure.DAL.Repositories
         {
             get
             {
-                throw new NotImplementedException();
+                if (_incomeItemSQL == null)
+                    _incomeItemSQL = new IncomeItemRepositorySQL(_dbcontext, _logger);
+                return _incomeItemSQL;
             }
         }
 
