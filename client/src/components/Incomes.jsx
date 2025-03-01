@@ -20,22 +20,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
 } from "@mui/material";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
-} from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -58,16 +44,19 @@ const Incomes = () => {
   const [expandedCategories, setExpandedCategories] = useState([]);
   const { user } = useContext(AuthContext);
 
-  // Состояние для графиков
+  // Состояние для графика
   const [selectedCategory, setSelectedCategory] = useState("");
-  const [startDate, setStartDate] = useState(
-    new Date(new Date().setDate(new Date().getDate() - 7)).toISOString().split("T")[0]
-  );
-  const [endDate, setEndDate] = useState(new Date().toISOString().split("T")[0]);
+
+ const [startDate, setStartDate] = useState(
+     new Date(new Date().getFullYear(), new Date().getMonth()+1, -29).toISOString().split("T")[0]
+   );
+ 
+   const [endDate, setEndDate] = useState(
+     new Date(new Date().getFullYear(), new Date().getMonth() + 1, 2).toISOString().split("T")[0]
+   ); // Сегодня
+
   const [chartData, setChartData] = useState([]);
-  const [pieData, setPieData] = useState([]);
   const [totalBudget, setTotalBudget] = useState(0);
-  const [chartType, setChartType] = useState("line");
 
   const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
 
@@ -101,7 +90,7 @@ const Incomes = () => {
         id: category.id,
         name: category.name,
         createdAt: category.createdAt,
-        expenseItems: category.incomeItems || [], // Заменяем expenseItems на incomeItems
+        incomeItems: category.incomeItems || [],
         totalAmount: category.incomeItems.reduce(
           (sum, item) => sum + item.amount,
           0
@@ -116,8 +105,6 @@ const Incomes = () => {
   }, [user]);
 
   const fetchChartData = useCallback(async () => {
-    if (!selectedCategory) return;
-
     try {
       const token = localStorage.getItem("token");
       const email = user?.email;
@@ -129,70 +116,64 @@ const Incomes = () => {
         }
       );
 
-      const selectedCat = response.data.find((cat) => cat.name === selectedCategory);
-      if (selectedCat) {
-        const filteredItems = selectedCat.incomeItems.filter((item) => {
+      if (!Array.isArray(response.data)) return;
+
+      const filteredCategories = selectedCategory
+        ? response.data.filter((cat) => cat.name === selectedCategory)
+        : response.data;
+
+      const dataByDate = {};
+
+      filteredCategories.forEach((cat, index) => {
+        const filteredItems = cat.incomeItems.filter((item) => {
           const itemDate = new Date(item.transactionDate);
           return itemDate >= new Date(startDate) && itemDate <= new Date(endDate);
         });
-        const data = filteredItems.map((item) => ({
-          name: new Date(item.transactionDate).toLocaleDateString(),
-          amount: item.amount,
-        }));
-        setChartData(data);
 
-        const total = filteredItems.reduce((sum, item) => sum + item.amount, 0);
-        setTotalBudget(total);
-      }
-    } catch (error) {
-      console.error("Ошибка при загрузке данных для графика:", error);
-    }
-  }, [selectedCategory, startDate, endDate, user]);
+        filteredItems.forEach((item) => {
+          const date = new Date(item.transactionDate).toLocaleDateString();
+          if (!dataByDate[date]) {
+            dataByDate[date] = { name: date };
+            filteredCategories.forEach((c) => {
+              dataByDate[date][c.name] = 0;
+            });
+          }
+          dataByDate[date][cat.name] += item.amount;
+        });
+      });
 
-  const fetchPieData = useCallback(async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const email = user?.email;
-      const response = await axios.get(
-        "https://localhost:7007/api/Income/getAllForOneUserByEmail",
-        {
-          params: { email },
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      const data = response.data
-        .map((cat) => ({
-          name: cat.name,
-          value: cat.incomeItems
+      // Сортируем данные по датам в хронологическом порядке
+      const chartDataFormatted = Object.values(dataByDate).sort((a, b) => {
+        const dateA = new Date(a.name.split(".").reverse().join("-"));
+        const dateB = new Date(b.name.split(".").reverse().join("-"));
+        return dateA - dateB;
+      });
+      setChartData(chartDataFormatted);
+      
+      const total = filteredCategories.reduce(
+        (sum, cat) =>
+          sum +
+          cat.incomeItems
             .filter((item) => {
               const itemDate = new Date(item.transactionDate);
               return itemDate >= new Date(startDate) && itemDate <= new Date(endDate);
             })
             .reduce((sum, item) => sum + item.amount, 0),
-        }))
-        .filter((d) => d.value > 0);
-      setPieData(data);
-
-      const total = data.reduce((sum, cat) => sum + cat.value, 0);
+        0
+      );
       setTotalBudget(total);
     } catch (error) {
-      console.error("Ошибка при загрузке данных для круговой диаграммы:", error);
+      console.error("Ошибка при загрузке данных для графика:", error);
     }
-  }, [startDate, endDate, user]);
+  }, [selectedCategory, startDate, endDate, user]);
 
   useEffect(() => {
     fetchCategories();
-    fetchPieData();
-  }, [fetchCategories, fetchPieData]);
+  }, [fetchCategories]);
 
   useEffect(() => {
-    if (chartType === "line") {
-      fetchChartData();
-    } else {
-      fetchPieData();
-    }
-  }, [fetchChartData, fetchPieData, chartType]);
+    fetchChartData();
+  }, [fetchChartData]);
 
   const handleCreateCategory = async () => {
     if (!categoryName.trim()) return;
@@ -429,7 +410,7 @@ const Incomes = () => {
                   </Button>
 
                   <List dense>
-                    {category.expenseItems.map((item) => (
+                    {category.incomeItems.map((item) => (
                       <ListItem
                         key={item.id}
                         secondaryAction={
@@ -550,85 +531,69 @@ const Incomes = () => {
       </Box>
       <Box sx={{ flex: 1, height: "100%", p: 2 }}>
         <Typography variant="h6" gutterBottom align="center">
-          Графики доходов
+          График доходов
         </Typography>
         <Grid container spacing={2}>
           <Grid item xs={12}>
             <Box>
-              <RadioGroup
-                row
-                value={chartType}
-                onChange={(e) => setChartType(e.target.value)}
-                sx={{ mb: 2, justifyContent: "center" }}
-              >
-                <FormControlLabel value="line" control={<Radio />} label="Линейный график" />
-                <FormControlLabel value="pie" control={<Radio />} label="Круговая диаграмма" />
-              </RadioGroup>
-
-              {chartType === "line" && (
-                <>
-                  <FormControl fullWidth sx={{ mb: 2 }}>
-                    <InputLabel>Категория</InputLabel>
-                    <Select
-                      value={selectedCategory}
-                      onChange={(e) => setSelectedCategory(e.target.value)}
-                      label="Категория"
-                    >
-                      <MenuItem value="">Выберите категорию</MenuItem>
-                      {categories.map((cat) => (
-                        <MenuItem key={cat.id} value={cat.name}>
-                          {cat.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                  <Box display="flex" gap={2} mb={2}>
-                    <TextField
-                      type="date"
-                      label="Начало периода"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      InputLabelProps={{ shrink: true }}
-                      fullWidth
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel>Категория</InputLabel>
+                <Select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  label="Категория"
+                >
+                  <MenuItem value="">Все категории</MenuItem>
+                  {categories.map((cat) => (
+                    <MenuItem key={cat.id} value={cat.name}>
+                      {cat.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <Box display="flex" gap={2} mb={2}>
+                <TextField
+                  type="date"
+                  label="Начало периода"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                  fullWidth
+                />
+                <TextField
+                  type="date"
+                  label="Конец периода"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                  fullWidth
+                />
+              </Box>
+              <LineChart width={500} height={300} data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip formatter={(value) => `${value} руб.`} />
+                <Legend />
+                {selectedCategory ? (
+                  <Line
+                    type="monotone"
+                    dataKey={selectedCategory}
+                    stroke="#8884d8"
+                    name={selectedCategory}
+                  />
+                ) : (
+                  categories.map((cat, index) => (
+                    <Line
+                      key={cat.name}
+                      type="monotone"
+                      dataKey={cat.name}
+                      stroke={COLORS[index % COLORS.length]}
+                      name={cat.name}
                     />
-                    <TextField
-                      type="date"
-                      label="Конец периода"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      InputLabelProps={{ shrink: true }}
-                      fullWidth
-                    />
-                  </Box>
-                  <LineChart width={500} height={300} data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip formatter={(value) => `${value} руб.`} />
-                    <Line type="monotone" dataKey="amount" stroke="#8884d8" />
-                  </LineChart>
-                </>
-              )}
-
-              {chartType === "pie" && (
-                <PieChart width={500} height={300}>
-                  <Pie
-                    data={pieData}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                  >
-                    {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value) => `${value} руб.`} />
-                  <Legend />
-                </PieChart>
-              )}
+                  ))
+                )}
+              </LineChart>
               <Typography variant="body2" align="center" sx={{ mt: 2 }}>
                 Общий доход за период: {totalBudget} руб.
               </Typography>
