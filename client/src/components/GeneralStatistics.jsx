@@ -18,6 +18,7 @@ const GeneralStatistics = () => {
   const [expenseData, setExpenseData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
   const [startDate, setStartDate] = useState(
     new Date(new Date().getFullYear(), new Date().getMonth()+1, -29).toISOString().split("T")[0]
   );
@@ -109,10 +110,10 @@ const GeneralStatistics = () => {
             <Typography variant="h6" align="center" gutterBottom>
               Доходы
             </Typography>
-            <PieChart width={300} height={200}>
+            <PieChart width={600} height={200}>
               <Pie
                 data={incomeData}
-                cx="50%"
+                cx="45%"
                 cy="50%"
                 outerRadius={80}
                 fill="#8884d8"
@@ -141,10 +142,10 @@ const GeneralStatistics = () => {
             <Typography variant="h6" align="center" gutterBottom>
               Расходы
             </Typography>
-            <PieChart width={300} height={200}>
+            <PieChart width={600} height={200}>
               <Pie
                 data={expenseData}
-                cx="50%"
+                cx="45%"
                 cy="50%"
                 outerRadius={80}
                 fill="#8884d8"

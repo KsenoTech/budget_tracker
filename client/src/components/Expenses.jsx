@@ -62,13 +62,15 @@ const Expenses = () => {
 
   // Состояние для графиков
   const [selectedCategory, setSelectedCategory] = useState("");
-  const [startDate, setStartDate] = useState(
-    new Date(new Date().setDate(new Date().getDate() - 7))
-      .toISOString()
-      .split("T")[0]
-  ); // Начало недели назад
+ const [startDate, setStartDate] = useState(
+    new Date(new Date().getFullYear(), new Date().getMonth()+1, -29).toISOString().split("T")[0]
+  );
+  // const [endDate, setEndDate] = useState(
+  //   new Date(new Date().getFullYear(), new Date().getMonth() + 1, 2).toISOString().split("T")[0]
+  // );
+
   const [endDate, setEndDate] = useState(
-    new Date().toISOString().split("T")[0]
+    new Date(new Date().getFullYear(), new Date().getMonth() + 1, 2).toISOString().split("T")[0]
   ); // Сегодня
   const [chartData, setChartData] = useState([]);
   const [pieData, setPieData] = useState([]);
