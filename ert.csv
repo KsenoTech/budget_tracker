@@ -1,2 +1,0 @@
-﻿IncomeCategory;IncomeCategory.Id;IncomeCategory.UserId;IncomeCategory.Name;IncomeCategory.CreatedAt;IncomeCategory.IncomeItems;IncomeCategory.User
-server.ApplicationCore.DomModels.IncomeCategory;1;de1f55cb-644d-481b-a699-f7150977a5c4;Автомобиль;"23.02.2025 16:23:07";[];""
