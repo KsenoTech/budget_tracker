@@ -2,28 +2,27 @@
 using server.ApplicationCore.DomModels;
 using server.ApplicationCore.Interfaces.Repositories;
 
-namespace server.Infrastructure.DAL.Repositories.Expense
+namespace server.Infrastructure.DAL.Repositories
 {
-    public class ExpenseItemRepositorySQL : IRepository<ExpenseItem>
+    public class LimitRepositorySQL : IRepository<CategoryLimit>
     {
         private readonly AccountingForIncomeAndExpensesContext _dbcontext;
         private readonly ILogger _logger;
 
-        public ExpenseItemRepositorySQL(AccountingForIncomeAndExpensesContext context, ILogger logger)
+        public LimitRepositorySQL(AccountingForIncomeAndExpensesContext context, ILogger logger)
         {
             _dbcontext = context;
             _logger = logger;
         }
 
-        
-        public async Task<bool> CreateAsync(ExpenseItem entity)
+        public async Task<bool> CreateAsync(CategoryLimit entity)
         {
             try
             {
-                _logger.LogInformation("Creating expense category with Name: {Name}", entity.Name);
-                await _dbcontext.ExpenseItems.AddAsync(entity);
+                _logger.LogInformation("Creating CategoryLimits with Name: {Name} and UserId: {UserId}", entity.Id, entity.ExpenseCategoryId);
+                await _dbcontext.CategoryLimits.AddAsync(entity);
                 await _dbcontext.SaveChangesAsync();
-                return true;
+                return true; 
             }
             catch (Exception ex)
             {
@@ -44,7 +43,7 @@ namespace server.Infrastructure.DAL.Repositories.Expense
             try
             {
                 _logger.LogInformation("Deleting income category with Id: {Id}", category.Id);
-                _dbcontext.ExpenseItems.Remove(category);
+                _dbcontext.CategoryLimits.Remove(category);
                 return true;
             }
             catch (Exception ex)
@@ -54,7 +53,7 @@ namespace server.Infrastructure.DAL.Repositories.Expense
             }
         }
 
-        public async Task<ExpenseItem> GetByIdAsync<TId>(TId id)
+        public async Task<CategoryLimit> GetByIdAsync<TId>(TId id)
         {
             try
             {
@@ -62,15 +61,15 @@ namespace server.Infrastructure.DAL.Repositories.Expense
 
                 if (id is int intId)
                 {
-                    return await _dbcontext.ExpenseItems
+                    return await _dbcontext.CategoryLimits
                                 .FirstOrDefaultAsync(c => c.Id == intId);
                 }
                 else
                 {
-                    // return new ExpenseItem();
-                    return await _dbcontext.ExpenseItems
-                         .Include(ei => ei.ExpenseCategory)
-                         .FirstOrDefaultAsync(ei => ei.Id == int.Parse(id.ToString()));
+                    //return new CategoryLimit();
+                    return await _dbcontext.CategoryLimits
+                                .Include(ic => ic.ExpenseCategory) // Включаем связанные IncomeItems
+                                .FirstOrDefaultAsync(ic => ic.Id == int.Parse(id.ToString()));
                 }
             }
             catch (Exception ex)
@@ -80,31 +79,33 @@ namespace server.Infrastructure.DAL.Repositories.Expense
             }
         }
 
-        public Task<List<ExpenseItem>> GetByUserEmailAsync(string email)
+        public Task<List<CategoryLimit>> GetByUserEmailAsync(string email)
         {
             throw new NotImplementedException();
         }
 
-        public Task<List<ExpenseItem>> GetByUserIdAsync(string userId)
+        public Task<List<CategoryLimit>> GetByUserIdAsync(string userId)
         {
             throw new NotImplementedException();
         }
 
-        public async Task<List<ExpenseItem>> GetListAsync()
+        public async Task<List<CategoryLimit>> GetListAsync()
         {
             try
             {
-                _logger.LogInformation("Fetching all expense categories");
-                return await _dbcontext.ExpenseItems.ToListAsync();
+                _logger.LogInformation("Fetching all income categories");
+                return await _dbcontext.CategoryLimits
+                .Include(ic => ic.ExpenseCategory) // Включаем связанные IncomeItems
+                .ToListAsync();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error while fetching all income categories");
-                return new List<ExpenseItem>();
+                return new List<CategoryLimit>();
             }
         }
 
-        public async Task<bool> UpdateAsync(ExpenseItem request)
+        public async Task<bool> UpdateAsync(CategoryLimit request)
         {
             try
             {

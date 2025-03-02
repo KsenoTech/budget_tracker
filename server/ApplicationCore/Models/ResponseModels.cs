@@ -20,7 +20,13 @@ namespace server.ApplicationCore.Models
 
 
         #region EXPENSE
-            
+            public class CategoryLimitDTO
+            {
+                public int CategoryId { get; set; }
+                public decimal LimitAmount { get; set; }
+                public DateTime StartDate { get; set; }
+                public DateTime EndDate { get; set; }
+            }
         #endregion
 
 
@@ -30,7 +36,7 @@ namespace server.ApplicationCore.Models
 
 
         #region UNION
-            public class CreateCategory
+        public class CreateCategory
             {
                 public string Name { get; set; } = null!;
                 public string UserId { get; set; } = null!;

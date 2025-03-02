@@ -12,12 +12,13 @@ namespace server.Infrastructure.DAL.Repositories
 
         private ClientRepositorySQL _clientReposSQL;
 
-        private ExpenseCategoryRepositorySQL _expenseCategorySQL;
-        private ExpenseItemRepositorySQL _expenseItemSQL;
+        private ExpenseCategoryRepositorySQL _expenseCategoryReposSQL;
+        private ExpenseItemRepositorySQL _expenseItemReposSQL;
 
-        private IncomeCategoryRepositorySQL _incomeCategorySQL;
-        private IncomeItemRepositorySQL _incomeItemSQL;
+        private IncomeCategoryRepositorySQL _incomeCategoryReposSQL;
+        private IncomeItemRepositorySQL _incomeItemReposSQL;
 
+        private LimitRepositorySQL _limitReposSQL;
 
         public DbRepository(AccountingForIncomeAndExpensesContext dbcontext, ILogger<AccountingForIncomeAndExpensesContext> logger)
         {
@@ -40,7 +41,9 @@ namespace server.Infrastructure.DAL.Repositories
         {
             get
             {
-                throw new NotImplementedException();
+                if (_limitReposSQL == null)
+                    _limitReposSQL = new LimitRepositorySQL(_dbcontext, _logger);
+                return _limitReposSQL;
             }
         }
 
@@ -48,9 +51,9 @@ namespace server.Infrastructure.DAL.Repositories
         {
             get
             {
-                if (_expenseCategorySQL == null)
-                    _expenseCategorySQL = new ExpenseCategoryRepositorySQL(_dbcontext, _logger);
-                return _expenseCategorySQL;
+                if (_expenseCategoryReposSQL == null)
+                    _expenseCategoryReposSQL = new ExpenseCategoryRepositorySQL(_dbcontext, _logger);
+                return _expenseCategoryReposSQL;
             }
         }
 
@@ -58,9 +61,9 @@ namespace server.Infrastructure.DAL.Repositories
         {
             get
             {
-                if (_expenseItemSQL == null)
-                    _expenseItemSQL = new ExpenseItemRepositorySQL(_dbcontext, _logger);
-                return _expenseItemSQL;
+                if (_expenseItemReposSQL == null)
+                    _expenseItemReposSQL = new ExpenseItemRepositorySQL(_dbcontext, _logger);
+                return _expenseItemReposSQL;
             }
         }
 
@@ -68,9 +71,9 @@ namespace server.Infrastructure.DAL.Repositories
         {
             get
             {
-                if (_incomeCategorySQL == null)
-                    _incomeCategorySQL = new IncomeCategoryRepositorySQL(_dbcontext, _logger);
-                return _incomeCategorySQL;
+                if (_incomeCategoryReposSQL == null)
+                    _incomeCategoryReposSQL = new IncomeCategoryRepositorySQL(_dbcontext, _logger);
+                return _incomeCategoryReposSQL;
             }
         }
 
@@ -78,9 +81,9 @@ namespace server.Infrastructure.DAL.Repositories
         {
             get
             {
-                if (_incomeItemSQL == null)
-                    _incomeItemSQL = new IncomeItemRepositorySQL(_dbcontext, _logger);
-                return _incomeItemSQL;
+                if (_incomeItemReposSQL == null)
+                    _incomeItemReposSQL = new IncomeItemRepositorySQL(_dbcontext, _logger);
+                return _incomeItemReposSQL;
             }
         }
 

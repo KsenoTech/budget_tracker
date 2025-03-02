@@ -43,17 +43,14 @@ const Expenses = () => {
   const [parentId, setParentId] = useState(null);
   const [expandedCategories, setExpandedCategories] = useState([]);
   const { user } = useContext(AuthContext);
+  const [limitError, setLimitError] = useState(null); // Новое состояние для ошибки лимита
 
   // Состояние для графика
   const [selectedCategory, setSelectedCategory] = useState("");
-
   const [startDate, setStartDate] = useState(
-    new Date(new Date().getFullYear(), new Date().getMonth()+1, -29).toISOString().split("T")[0]
+    new Date(new Date().setDate(new Date().getDate() - 7)).toISOString().split("T")[0]
   );
-
-  const [endDate, setEndDate] = useState(
-    new Date(new Date().getFullYear(), new Date().getMonth() + 1, 2).toISOString().split("T")[0]
-  ); // Сегодня
+  const [endDate, setEndDate] = useState(new Date().toISOString().split("T")[0]);
   const [chartData, setChartData] = useState([]);
   const [totalBudget, setTotalBudget] = useState(0);
 
@@ -118,7 +115,6 @@ const Expenses = () => {
         ? response.data.filter((cat) => cat.name === selectedCategory)
         : response.data;
 
-      // Создаём объект для объединения данных по дням
       const dataByDate = {};
 
       filteredCategories.forEach((cat, index) => {
@@ -132,21 +128,20 @@ const Expenses = () => {
           if (!dataByDate[date]) {
             dataByDate[date] = { name: date };
             filteredCategories.forEach((c) => {
-              dataByDate[date][c.name] = 0; // Инициализируем все категории нулем
+              dataByDate[date][c.name] = 0;
             });
           }
           dataByDate[date][cat.name] += item.amount;
         });
       });
 
-      // Сортируем данные по датам в хронологическом порядке
       const chartDataFormatted = Object.values(dataByDate).sort((a, b) => {
         const dateA = new Date(a.name.split(".").reverse().join("-"));
         const dateB = new Date(b.name.split(".").reverse().join("-"));
         return dateA - dateB;
       });
       setChartData(chartDataFormatted);
-      
+
       const total = filteredCategories.reduce(
         (sum, cat) =>
           sum +
@@ -211,8 +206,18 @@ const Expenses = () => {
       setCategoryName("");
       setCategoryAmount("");
       setParentId(null);
+      setLimitError(null); // Сбрасываем ошибку лимита
       fetchCategories();
     } catch (error) {
+      if (error.response && error.response.data && error.response.data.message) {
+        if (error.response.data.message.includes("Превышен лимит")) {
+          setLimitError("Вы не можете потратить, т.к. действует лимит. Либо уменьшите трату, либо отмените транзакцию");
+        } else {
+          setError(error.response.data.message);
+        }
+      } else {
+        setError("Ошибка при создании категории");
+      }
       console.error("Ошибка при создании категории:", error);
     }
   };
@@ -246,8 +251,18 @@ const Expenses = () => {
       setCategoryName("");
       setCategoryAmount("");
       setParentId(null);
+      setLimitError(null); // Сбрасываем ошибку лимита
       fetchCategories();
     } catch (error) {
+      if (error.response && error.response.data && error.response.data.message) {
+        if (error.response.data.message.includes("Превышен лимит")) {
+          setLimitError("Вы не можете потратить, т.к. действует лимит. Либо уменьшите трату, либо отмените транзакцию");
+        } else {
+          setError(error.response.data.message);
+        }
+      } else {
+        setError("Ошибка при создании элемента расхода");
+      }
       console.error("Ошибка при создании элемента расхода:", error);
     }
   };
@@ -275,8 +290,18 @@ const Expenses = () => {
       setCategoryName("");
       setCategoryAmount("");
       setEditingCategory(null);
+      setLimitError(null); // Сбрасываем ошибку лимита
       fetchCategories();
     } catch (error) {
+      if (error.response && error.response.data && error.response.data.message) {
+        if (error.response.data.message.includes("Превышен лимит")) {
+          setLimitError("Вы не можете потратить, т.к. действует лимит. Либо уменьшите трату, либо отмените транзакцию");
+        } else {
+          setError(error.response.data.message);
+        }
+      } else {
+        setError("Ошибка при обновлении:");
+      }
       console.error("Ошибка при обновлении:", error);
     }
   };
@@ -295,6 +320,7 @@ const Expenses = () => {
       });
       fetchCategories();
     } catch (error) {
+      setError(error.response?.data?.message || "Ошибка при удалении");
       console.error("Ошибка при удалении:", error);
     }
   };
@@ -345,6 +371,7 @@ const Expenses = () => {
             setOpenAddDialog(true);
             setCategoryName("");
             setParentId(null);
+            setLimitError(null); // Сбрасываем ошибку лимита при открытии диалога
           }}
           sx={{ marginTop: 2 }}
         >
@@ -376,6 +403,7 @@ const Expenses = () => {
                         setCategoryName(category.name);
                         setCategoryAmount("");
                         setOpenEditDialog(true);
+                        setLimitError(null); // Сбрасываем ошибку лимита при открытии редактирования
                       }}
                     >
                       <EditIcon />
@@ -411,6 +439,7 @@ const Expenses = () => {
                       setCategoryName("");
                       setCategoryAmount("");
                       setParentId(category.id);
+                      setLimitError(null); // Сбрасываем ошибку лимита при открытии диалога
                     }}
                     sx={{ mb: 1 }}
                   >
@@ -431,6 +460,7 @@ const Expenses = () => {
                                 setCategoryName(item.name);
                                 setCategoryAmount(item.amount.toString());
                                 setOpenEditDialog(true);
+                                setLimitError(null); // Сбрасываем ошибку лимита
                               }}
                             >
                               <EditIcon />
@@ -479,13 +509,24 @@ const Expenses = () => {
                 type="number"
                 fullWidth
                 value={categoryAmount}
-                onChange={(e) => setCategoryAmount(e.target.value)}
+                onChange={(e) => {
+                  setCategoryAmount(e.target.value);
+                  setLimitError(null); // Сбрасываем ошибку лимита при изменении суммы
+                }}
               />
+            )}
+            {limitError && (
+              <Typography color="error" sx={{ mt: 2 }}>
+                {limitError}
+              </Typography>
             )}
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setOpenAddDialog(false)}>Отмена</Button>
-            <Button onClick={parentId ? handleCreateExpenseItem : handleCreateCategory}>
+            <Button
+              onClick={parentId ? handleCreateExpenseItem : handleCreateCategory}
+              disabled={!!limitError} // Отключаем кнопку, если есть ошибка лимита
+            >
               Создать
             </Button>
           </DialogActions>
@@ -515,14 +556,23 @@ const Expenses = () => {
                 type="number"
                 fullWidth
                 value={categoryAmount}
-                onChange={(e) => setCategoryAmount(e.target.value)}
+                onChange={(e) => {
+                  setCategoryAmount(e.target.value);
+                  setLimitError(null); // Сбрасываем ошибку лимита при изменении суммы
+                }}
               />
+            )}
+            {limitError && (
+              <Typography color="error" sx={{ mt: 2 }}>
+                {limitError}
+              </Typography>
             )}
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setOpenEditDialog(false)}>Отмена</Button>
             <Button
               onClick={() => handleUpdateCategory(editingCategory?.amount !== undefined)}
+              disabled={!!limitError} // Отключаем кнопку, если есть ошибка лимита
             >
               Сохранить
             </Button>
@@ -581,17 +631,24 @@ const Expenses = () => {
                 <YAxis />
                 <Tooltip formatter={(value) => `${value} руб.`} />
                 <Legend />
-                {selectedCategory
-                  ? <Line type="monotone" dataKey={selectedCategory} stroke="#8884d8" name={selectedCategory} />
-                  : categories.map((cat, index) => (
-                      <Line
-                        key={cat.name}
-                        type="monotone"
-                        dataKey={cat.name}
-                        stroke={COLORS[index % COLORS.length]}
-                        name={cat.name}
-                      />
-                    ))}
+                {selectedCategory ? (
+                  <Line
+                    type="monotone"
+                    dataKey={selectedCategory}
+                    stroke="#8884d8"
+                    name={selectedCategory}
+                  />
+                ) : (
+                  categories.map((cat, index) => (
+                    <Line
+                      key={cat.name}
+                      type="monotone"
+                      dataKey={cat.name}
+                      stroke={COLORS[index % COLORS.length]}
+                      name={cat.name}
+                    />
+                  ))
+                )}
               </LineChart>
               <Typography variant="body2" align="center" sx={{ mt: 2 }}>
                 Общий бюджет за период: {totalBudget} руб.

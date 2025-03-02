@@ -4,15 +4,27 @@ namespace server.ApplicationCore.Interfaces.Services
 {
     public interface IExpenseService
     {
-        Task<bool> CreateCategoryAsync(ExpenseCategory category);
-        Task<bool> CreateExpenseItemAsync(ExpenseItem expenseItem, string userId, string categoryName);
+        #region Categories
+            Task<bool> CreateCategoryAsync(ExpenseCategory category);
+            Task<bool> DeleteCategoryAsync(int id);
+            Task<List<ExpenseCategory>> GetCategoriesByEmailAsync(string email);
+            Task<bool> UpdateCategoryAsync(int id, string name);
+        #endregion
 
-        Task<bool> DeleteCategoryAsync(int id);
+
+        #region Items
+        Task<(bool Success, string ErrorMessage)> CreateExpenseItemAsync(ExpenseItem expenseItem, string userId, string categoryName);
         Task<bool> DeleteItemAsync(int id);
+            Task<bool> UpdateItemAsync(ExpenseItem category);
+        #endregion
 
-        Task<List<ExpenseCategory>> GetCategoriesByEmailAsync(string email);
 
-        Task<bool> UpdateCategoryAsync(int id, string name);
-        Task<bool> UpdateItemAsync(ExpenseItem category);
+        #region Limits
+            Task<CategoryLimit> GetActiveCategoryLimitAsync(int expenseCategoryId, DateTime transactionDate);
+            Task<bool> CreateCategoryLimitAsync(CategoryLimit categoryLimit);
+            Task<List<CategoryLimit>> GetAllCategoryLimitsAsync(string userId);
+            Task<bool> UpdateCategoryLimitAsync(CategoryLimit categoryLimit);
+            Task<bool> DeleteCategoryLimitAsync(int id);
+        #endregion
     }
 }
