@@ -57,6 +57,7 @@ namespace server.Controllers
                 // Извлекаем данные из токена через ClaimsPrincipal
                 var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 var username = User.FindFirst(ClaimTypes.Name)?.Value;
+                var email = User.FindFirst(ClaimTypes.Email)?.Value;
 
                 if (string.IsNullOrEmpty(userId))
                 {
@@ -75,6 +76,7 @@ namespace server.Controllers
                 {
                     UserId = userId,
                     Username = username,
+                    Email = email,
                     Message = "Token is valid"
                 });
             }

@@ -16,7 +16,7 @@ export const AuthProvider = ({ children }) => {
                         headers: { Authorization: `Bearer ${token}` },
                     });
                     // Предполагаем, что сервер возвращает { userId, username }, где username — это email
-                    setUser({ id: response.data.userId, email: response.data.username });
+                    setUser({ id: response.data.userId, username: response.data.username, email: response.data.email });
                 } catch (error) {
                     console.error('Ошибка проверки токена:', error);
                     setToken(null);

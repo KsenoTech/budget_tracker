@@ -1,11 +1,11 @@
 import React, { useContext } from 'react';
-import { AppBar, Toolbar, Typography, Drawer, List, ListItem, ListItemIcon, ListItemText, Box, Button } from '@mui/material';
-import { AttachMoney, MoneyOff, Speed, Category } from '@mui/icons-material'; // Иконки для красоты
+import { AppBar, Toolbar, Typography, Drawer, List, ListItem, ListItemIcon, ListItemText, Box, Button, Divider } from '@mui/material';
+import { AttachMoney, MoneyOff, Speed, Category, AccountBalanceWallet } from '@mui/icons-material'; // Добавили иконку для приложения
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate, Outlet } from 'react-router-dom';
 
 const Dashboard = () => {
-    const { setToken } = useContext(AuthContext);
+    const { user, setToken } = useContext(AuthContext); // Получаем user из AuthContext
     const navigate = useNavigate();
 
     const handleLogout = () => {
@@ -25,8 +25,8 @@ const Dashboard = () => {
         <Box sx={{ display: 'flex' }}>
             <AppBar position="fixed">
                 <Toolbar>
-                    <Typography variant="h6" sx={{ flexGrow: 1 }}>
-                        Мои финансы
+                    <Typography variant="h6" sx={{ flexGrow: 1, textAlign: 'center' }}>
+                        {user?.email || 'Пользователь'} {/* Отображаем email пользователя */}
                     </Typography>
                     <Button color="inherit" onClick={handleLogout}>
                         Выйти
@@ -34,7 +34,13 @@ const Dashboard = () => {
                 </Toolbar>
             </AppBar>
             <Drawer variant="permanent" sx={{ width: 240, flexShrink: 0 }}>
-                <Toolbar /> {/* Пустое пространство под AppBar */}
+                <Toolbar sx={{ display: 'flex', alignItems: 'center', px: 2 }}>
+                    <AccountBalanceWallet sx={{ mr: 1 }} />
+                    <Typography variant="h6">
+                        Мои финансы
+                    </Typography>
+                </Toolbar>
+                <Divider />
                 <List>
                     {menuItems.map((item) => (
                         <ListItem button key={item.text} onClick={() => navigate(item.path)}>
@@ -45,9 +51,8 @@ const Dashboard = () => {
                 </List>
             </Drawer>
             <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
-                <Toolbar /> {/* Пустое пространство под AppBar */}
-                {/* <Typography variant="h5">Эта страница пока в разработке</Typography> */}
-                <Outlet /> {/* Здесь будут рендериться подмаршруты */}
+                <Toolbar />
+                <Outlet />
             </Box>
         </Box>
     );
